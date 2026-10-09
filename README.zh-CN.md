@@ -56,7 +56,12 @@ dsh plugin --profile web add https://github.com/JochenYang/dsh-rewind-plugin/rel
 dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```
 
-`web` 是随包发行的 profile 名，换成你自己在用的那个即可。三种写法都会把这个包写进该 profile 的依赖，
+并把包名追加到 `dsh.profile.bundles`；重启这个 profile 才会加载它。
+
+**官方桌面端没有对应的命令行。** 它的 `desktop` profile 由 Electron 应用独占，CLI 会直接拒绝
+（`error: profile "desktop" is managed exclusively by the Electron application`）。请在应用内安装：
+**设置 → 插件 → 添加插件**，在「包名或地址」里填 `@jochenyang/dsh-rewind-plugin`，安装后重启应用。
+这个输入框同样接受 Git 地址、本地目录和 `.tgz` 压缩包，界面也会提示「已安装，下次启动后加载」。
 并把包名追加到 `dsh.profile.bundles`；重启这个 profile 才会加载它。
 
 `peerDependencies` 里刻意不写任何 `@deepseek-ai/dsh-*`：安装器会把每一个这类 peer 与当前运行版本做

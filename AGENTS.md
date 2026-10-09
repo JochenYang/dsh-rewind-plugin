@@ -74,7 +74,8 @@ is never edited — a fix is a new version.
 `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/): an `Unreleased`
 section at the top, one entry per released version with an ISO date, changes grouped under Added /
 Changed / Deprecated / Removed / Fixed / Security, newest first, and a comparison link per version.
-Write the entry, then release — not the other way round.
+Write the entry, then release — not the other way round. A documentation-only change gets no
+release of its own: leave its entry under `Unreleased` and let it ride the next version.
 
 Release sequence:
 

@@ -60,7 +60,14 @@ dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```
 
 `web` is the shipped profile name — use whichever profile you run. Every form writes the package
-into that profile's dependencies and appends it to `dsh.profile.bundles`. Restart the profile to
+load it.
+
+**The official desktop client has no command for this.** Its `desktop` profile is reserved for the
+Electron application, and the CLI refuses to touch it (`error: profile "desktop" is managed
+exclusively by the Electron application`). Install from inside the app instead:
+**Settings → Plugins → Add plugin**, enter `@jochenyang/dsh-rewind-plugin` under "Package name or
+address", install, and restart the app. That field also takes a Git address, a local directory or a
+`.tgz`, and the page says itself that a new plugin loads at the next start.
 load it.
 
 `peerDependencies` deliberately declares no `@deepseek-ai/dsh-*` package. The installer compares

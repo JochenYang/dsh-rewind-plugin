@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 官方桌面端的安装步骤（它不是一条命令）：`desktop` profile 由 Electron 应用独占，只能在应用内添加。
+
 ## [0.1.4] - 2026-10-09
 
 ### Added

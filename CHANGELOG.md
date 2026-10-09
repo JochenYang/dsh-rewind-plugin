@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Added
+
+- The official desktop client's install steps, which are not a command: its `desktop` profile is
+  reserved for the Electron application, so the plugin is added from inside the app.
+
 ## [0.1.4] - 2026-10-09
 
 ### Added
