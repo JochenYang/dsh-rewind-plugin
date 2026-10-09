@@ -24,6 +24,13 @@
 内容退出模型上下文、从对话界面隐藏，原文回到输入框，可以改完重发。被撤回的那些回合改动过的文件会
 恢复原样，而每一个被移走的字节都留在隔离区里，可以查看、可以清空。
 
+## 效果
+
+![撤回前的确认框：会改动 1 个文件，附改动前后的差异；被移走的字节进隔离区](assets/recall-confirm.png)
+
+撤回前的确认框：这次撤回会改动哪些文件、每个文件的真实前后差异，以及挡路的那些字节最后去了哪里。
+不会删除任何东西。
+
 ## 它带来什么
 
 | 位置                  | 说明                                                                             |
@@ -131,7 +138,8 @@ pnpm 默认拒绝运行 git 依赖的构建脚本，除非该 profile 把它加�
 
 每个版本都记在 [CHANGELOG.md](CHANGELOG.md) 里，格式遵循
 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)；版本号遵循
-[语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+[语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。中文版即本文件对应的
+[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 
 ## 许可
 

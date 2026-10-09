@@ -26,6 +26,13 @@ the original text back in the composer so you can correct it and send it again. 
 turns changed are put back the way they were, and every displaced byte is kept in a quarantine you
 can look into and clear.
 
+## See it
+
+![The recall confirmation dialog: one file will be restored, with its before/after diff, and the displaced bytes go to the quarantine](assets/recall-confirm.png)
+
+The confirmation dialog before a recall: which files the recall will change, a real before/after diff for
+each one, and where the bytes that were in the way end up. Nothing is deleted.
+
 ## What it adds
 
 | Surface                          | Where                                                                                                               |
@@ -143,7 +150,8 @@ registry release.
 
 Every release is documented in [CHANGELOG.md](CHANGELOG.md), following
 [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Version numbers follow
-[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
+[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html). A Chinese mirror lives in
+[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md).
 
 ## License
 

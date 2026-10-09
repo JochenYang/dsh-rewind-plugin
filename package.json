@@ -61,7 +61,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md"
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
