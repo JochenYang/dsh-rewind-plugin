@@ -54,7 +54,7 @@
     "build": "node build.mjs",
     "test": "node scripts/test.mjs",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepare": "node build.mjs"
   },
   "files": [
     "lib",

@@ -1,15 +1,21 @@
-<img src="icon.svg" alt="" width="76" height="76" align="center">
+<h1 align="center">dsh-rewind-plugin</h1>
 
-# dsh-rewind-plugin
+<p align="center">
+  <img src="icon.svg" width="96" height="96" alt="dsh-rewind-plugin">
+</p>
 
-[English](README.md) · **简体中文**
+<p align="center">
+  <a href="README.md">English</a> · 简体中文
+</p>
 
-[![npm](https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin)
-[![License](https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/stargazers)
-[![Issues](https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/issues)
-[![DSH](https://img.shields.io/badge/DSH-0.2.0--rc.2-4176e6?style=flat-square)](https://github.com/deepseek-ai/deepseek-harness)
-[![Topic](https://img.shields.io/badge/topic-dsh--plugin-4176e6?style=flat-square)](https://github.com/topics/dsh-plugin)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin"><img src="https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square" alt="license"></a>
+  <a href="https://github.com/JochenYang/dsh-rewind-plugin/stargazers"><img src="https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square" alt="stars"></a>
+  <a href="https://github.com/JochenYang/dsh-rewind-plugin/issues"><img src="https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square" alt="issues"></a>
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/DSH-0.2.0--rc.2-4176e6?style=flat-square" alt="DSH 0.2.0-rc.2"></a>
+  <a href="https://github.com/topics/dsh-plugin"><img src="https://img.shields.io/badge/topic-dsh--plugin-4176e6?style=flat-square" alt="topic dsh-plugin"></a>
+</p>
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 用的消息撤回：把会话退回到某条
 已发送消息之前。
@@ -34,15 +40,17 @@
 
 ```sh
 # 从 registry 装
-dsh plugin --profile <profile> add @jochenyang/dsh-rewind-plugin
+dsh plugin --profile web add @jochenyang/dsh-rewind-plugin
 
-# 或者用打包好的 tgz，不经过 registry
-npm pack          # 或者从 Releases 下载 .tgz
-dsh plugin --profile <profile> add /绝对路径/dsh-rewind-plugin-<版本>.tgz
+# 或者直接用 Release 里的 tgz，不经过 registry
+dsh plugin --profile web add https://github.com/JochenYang/dsh-rewind-plugin/releases/latest/download/dsh-rewind-plugin.tgz
+
+# 或者从仓库装，安装时自动构建
+dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```
 
-两种方式都会把这个包写进该 profile 的依赖，并把包名追加到 `dsh.profile.bundles`。重启这个 profile
-才会加载它。
+`web` 是随包发行的 profile 名，换成你自己在用的那个即可。三种写法都会把这个包写进该 profile 的依赖，
+并把包名追加到 `dsh.profile.bundles`；重启这个 profile 才会加载它。
 
 `peerDependencies` 里刻意不写任何 `@deepseek-ai/dsh-*`：安装器会把每一个这类 peer 与当前运行版本做
 比较，不满足就拒绝安装，那等于把这个插件限制在某一个 DSH 版本上。而这个插件运行起来不需要额外安装任何
@@ -100,6 +108,9 @@ npm test           # 用 esbuild 打包 tests/*.test.ts，再跑 node --test
 `npm run build` 把 `@deepseek-ai/*`、`@cordisjs/*`、`react`、`react-dom`、`zod` 标为外部依赖，并把
 浏览器半边包进 web 客户端要求的 `window.__ModuleLoader__.load({ id, factory })` 闭包。不要把任何
 `@deepseek-ai/*` 打进产物：第二份拷贝会让类身份对不上运行中的宿主。
+
+构建同时挂在 `prepare` 脚本上，所以本地 `npm install` 与别人执行
+`dsh plugin add github:JochenYang/dsh-rewind-plugin` 都会自动产出 `lib/`，不需要手工构建。
 
 ## 目录
 

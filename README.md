@@ -1,15 +1,21 @@
-<img src="icon.svg" alt="" width="76" height="76" align="center">
+<h1 align="center">dsh-rewind-plugin</h1>
 
-# dsh-rewind-plugin
+<p align="center">
+  <img src="icon.svg" width="96" height="96" alt="dsh-rewind-plugin">
+</p>
 
-**English** · [简体中文](README.zh-CN.md)
+<p align="center">
+  English · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-[![npm](https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin)
-[![License](https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/stargazers)
-[![Issues](https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/issues)
-[![DSH](https://img.shields.io/badge/DSH-0.2.0--rc.2-4176e6?style=flat-square)](https://github.com/deepseek-ai/deepseek-harness)
-[![Topic](https://img.shields.io/badge/topic-dsh--plugin-4176e6?style=flat-square)](https://github.com/topics/dsh-plugin)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin"><img src="https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square" alt="license"></a>
+  <a href="https://github.com/JochenYang/dsh-rewind-plugin/stargazers"><img src="https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square" alt="stars"></a>
+  <a href="https://github.com/JochenYang/dsh-rewind-plugin/issues"><img src="https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square" alt="issues"></a>
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/DSH-0.2.0--rc.2-4176e6?style=flat-square" alt="DSH 0.2.0-rc.2"></a>
+  <a href="https://github.com/topics/dsh-plugin"><img src="https://img.shields.io/badge/topic-dsh--plugin-4176e6?style=flat-square" alt="topic dsh-plugin"></a>
+</p>
 
 Message recall for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): cut the
 conversation back to before a message you already sent.
@@ -37,15 +43,18 @@ the page and nothing else.
 
 ```sh
 # from the registry
-dsh plugin --profile <profile> add @jochenyang/dsh-rewind-plugin
+dsh plugin --profile web add @jochenyang/dsh-rewind-plugin
 
-# or from a tarball, no registry involved
-npm pack          # or download the .tgz from Releases
-dsh plugin --profile <profile> add /absolute/path/to/dsh-rewind-plugin-<version>.tgz
+# or straight from the release tarball, no registry involved
+dsh plugin --profile web add https://github.com/JochenYang/dsh-rewind-plugin/releases/latest/download/dsh-rewind-plugin.tgz
+
+# or from the repository, built on install
+dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```
 
-Either form writes the package into the profile's dependencies and appends it to
-`dsh.profile.bundles`. Restart the profile to load it.
+`web` is the shipped profile name — use whichever profile you run. Every form writes the package
+into that profile's dependencies and appends it to `dsh.profile.bundles`. Restart the profile to
+load it.
 
 `peerDependencies` deliberately declares no `@deepseek-ai/dsh-*` package. The installer compares
 every such peer against the running runtime version and refuses the install when it does not match,
@@ -110,6 +119,10 @@ npm test           # bundles tests/*.test.ts with esbuild, then node --test
 wraps the browser half in the `window.__ModuleLoader__.load({ id, factory })` closure the web client
 loads. Never bundle an `@deepseek-ai/*` package: a second copy breaks class identity against the
 running host.
+
+The build is also wired to the `prepare` script, so `npm install` here and
+`dsh plugin add github:JochenYang/dsh-rewind-plugin` on someone else's machine both produce `lib/`
+without a manual step.
 
 ## Layout
 
