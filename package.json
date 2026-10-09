@@ -62,7 +62,8 @@
     "locale/*.json",
     "icon.svg",
     "CHANGELOG.md",
-    "CHANGELOG.zh-CN.md"
+    "CHANGELOG.zh-CN.md",
+    "assets"
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",

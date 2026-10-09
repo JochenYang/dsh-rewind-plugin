@@ -9,6 +9,16 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-09
+
+### Added
+
+- 撤回确认框的截图：嵌进两份 README，并在 `screenshots.json` 里声明，供插件市场展示。
+
+### Changed
+
+- 更新日志增加简体中文镜像，两份文件互相链接。
+
 ## [0.1.3] - 2026-10-09
 
 ### Changed
@@ -44,7 +54,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JochenYang/dsh-rewind-plugin/releases/tag/v0.1.1

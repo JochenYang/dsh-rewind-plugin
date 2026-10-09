@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-09
+
+### Added
+
+- A screenshot of the confirmation dialog, embedded in both readmes and declared in `screenshots.json`
+  so storefronts show it.
+
+### Changed
+
+- The changelog now has a Simplified Chinese mirror, cross-linked from both files.
+
 ## [0.1.3] - 2026-10-09
 
 ### Changed
@@ -47,7 +58,8 @@ First published release.
 - The port itself: the `@dsh-app` suite's rewind plugin adapted into a standalone package for stock
   DeepSeek Harness. Never published; `0.1.1` is the first release.
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JochenYang/dsh-rewind-plugin/releases/tag/v0.1.1
