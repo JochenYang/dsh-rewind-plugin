@@ -127,6 +127,12 @@ pnpm 默认拒绝运行 git 依赖的构建脚本，除非该 profile 把它加�
 | `src/client/`                                          | 组件、中英文案、注入的样式表                     |
 | `cordis.patch.yml`                                     | 挂载插件的唯一一行 insert                      |
 
+## 更新日志与版本号
+
+每个版本都记在 [CHANGELOG.md](CHANGELOG.md) 里，格式遵循
+[Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)；版本号遵循
+[语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
 ## 许可
 
 [MIT](LICENSE)

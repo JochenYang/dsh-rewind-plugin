@@ -139,6 +139,12 @@ registry release.
 | `src/client/`                                            | the components, dictionaries and the injected stylesheet                 |
 | `cordis.patch.yml`                                       | the one insert row that mounts the plugin                                |
 
+## Changelog
+
+Every release is documented in [CHANGELOG.md](CHANGELOG.md), following
+[Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Version numbers follow
+[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
+
 ## License
 
 [MIT](LICENSE)
