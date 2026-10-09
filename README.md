@@ -4,7 +4,7 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-[![npm](https://img.shields.io/npm/v/@rhysyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@rhysyang/dsh-rewind-plugin)
+[![npm](https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin)
 [![License](https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/stargazers)
 [![Issues](https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/issues)
@@ -37,7 +37,7 @@ the page and nothing else.
 
 ```sh
 # from the registry
-dsh plugin --profile <profile> add @rhysyang/dsh-rewind-plugin
+dsh plugin --profile <profile> add @jochenyang/dsh-rewind-plugin
 
 # or from a tarball, no registry involved
 npm pack          # or download the .tgz from Releases

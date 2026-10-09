@@ -17,4 +17,4 @@ import { buildDual } from './scripts/build-lib.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
-await buildDual(here, '@rhysyang/dsh-rewind-plugin', { extra: [/^zod(\/|$)/] })
+await buildDual(here, '@jochenyang/dsh-rewind-plugin', { extra: [/^zod(\/|$)/] })

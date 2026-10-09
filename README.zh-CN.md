@@ -4,7 +4,7 @@
 
 [English](README.md) · **简体中文**
 
-[![npm](https://img.shields.io/npm/v/@rhysyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@rhysyang/dsh-rewind-plugin)
+[![npm](https://img.shields.io/npm/v/@jochenyang%2Fdsh-rewind-plugin?style=flat-square)](https://www.npmjs.com/package/@jochenyang/dsh-rewind-plugin)
 [![License](https://img.shields.io/github/license/JochenYang/dsh-rewind-plugin?style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/stargazers)
 [![Issues](https://img.shields.io/github/issues/JochenYang/dsh-rewind-plugin?style=flat-square)](https://github.com/JochenYang/dsh-rewind-plugin/issues)
@@ -34,7 +34,7 @@
 
 ```sh
 # 从 registry 装
-dsh plugin --profile <profile> add @rhysyang/dsh-rewind-plugin
+dsh plugin --profile <profile> add @jochenyang/dsh-rewind-plugin
 
 # 或者用打包好的 tgz，不经过 registry
 npm pack          # 或者从 Releases 下载 .tgz

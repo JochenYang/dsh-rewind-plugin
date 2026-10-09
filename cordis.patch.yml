@@ -1,4 +1,4 @@
-# @rhysyang/dsh-rewind-plugin — loader patch.
+# @jochenyang/dsh-rewind-plugin — loader patch.
 #
 # One insert row mounts the plugin. The plugin declares `commands` and
 # `sessionProjections` in its `inject`, so a profile without either seam leaves
@@ -13,4 +13,4 @@
 # quoted: a leading `@` is a reserved indicator in YAML and otherwise fails to parse.
 - insert:
     - id: rewind
-      name: '@rhysyang/dsh-rewind-plugin'
+      name: '@jochenyang/dsh-rewind-plugin'
