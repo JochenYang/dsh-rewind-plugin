@@ -1,5 +1,7 @@
 node_modules/
-lib/
+# lib/ is committed on purpose: pnpm refuses to run a git dependency's build
+# script unless the installing profile allowlists it, so a git install must not
+# need one. Rebuild and commit before publishing (prepublishOnly does the build).
 .test-dist/
 .scratch/
 *.tgz

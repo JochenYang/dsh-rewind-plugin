@@ -120,9 +120,10 @@ wraps the browser half in the `window.__ModuleLoader__.load({ id, factory })` cl
 loads. Never bundle an `@deepseek-ai/*` package: a second copy breaks class identity against the
 running host.
 
-The build is also wired to the `prepare` script, so `npm install` here and
-`dsh plugin add github:JochenYang/dsh-rewind-plugin` on someone else's machine both produce `lib/`
-without a manual step.
+`lib/` is committed, so `dsh plugin add github:JochenYang/dsh-rewind-plugin` installs without a
+build step — pnpm refuses to run a git dependency's build script unless the installing profile
+allowlists it. Run `npm run build` after changing `src/`; `prepublishOnly` does the same before a
+registry release.
 
 ## Layout
 

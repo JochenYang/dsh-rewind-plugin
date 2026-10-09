@@ -109,8 +109,9 @@ npm test           # 用 esbuild 打包 tests/*.test.ts，再跑 node --test
 浏览器半边包进 web 客户端要求的 `window.__ModuleLoader__.load({ id, factory })` 闭包。不要把任何
 `@deepseek-ai/*` 打进产物：第二份拷贝会让类身份对不上运行中的宿主。
 
-构建同时挂在 `prepare` 脚本上，所以本地 `npm install` 与别人执行
-`dsh plugin add github:JochenYang/dsh-rewind-plugin` 都会自动产出 `lib/`，不需要手工构建。
+`lib/` 已入库，所以 `dsh plugin add github:JochenYang/dsh-rewind-plugin` 不需要构建就能装——
+pnpm 默认拒绝运行 git 依赖的构建脚本，除非该 profile 把它加进允许名单。改过 `src/` 之后跑一次
+`npm run build`；`prepublishOnly` 会在发布到 registry 前做同一件事。
 
 ## 目录
 
