@@ -1,0 +1,16 @@
+# @rhysyang/dsh-rewind-plugin — loader patch.
+#
+# One insert row mounts the plugin. The plugin declares `commands` and
+# `sessionProjections` in its `inject`, so a profile without either seam leaves
+# it inactive instead of failing the boot. Its quarantine manager's routes ride
+# `connection`, which is taken as a SCOPED dependency (`ctx.inject`) rather than
+# a declared one: without it the plugin still loads and recall still works, only
+# the management page is missing.
+#
+# `id` is the Loader row id; `name` is the npm package name a profile resolves
+# this row through, so it must equal `package.json`'s name. A mismatch is
+# skipped with a warning rather than reported as an error. A scoped name MUST be
+# quoted: a leading `@` is a reserved indicator in YAML and otherwise fails to parse.
+- insert:
+    - id: rewind
+      name: '@rhysyang/dsh-rewind-plugin'
