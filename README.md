@@ -23,8 +23,9 @@ conversation back to before a message you already sent.
 A sent message cannot be edited or withdrawn. This plugin cuts the model-visible surface back to
 before a chosen user message, hides that message and everything after it in the transcript, and puts
 the original text back in the composer so you can correct it and send it again. Files the recalled
-turns changed are put back the way they were, and every displaced byte is kept in a quarantine you
-can look into and clear.
+turns changed are put back byte for byte, and every displaced byte is kept in a quarantine you can
+look into and clear. A recall that could not cover everything says so instead of claiming a clean
+revert.
 
 ## See it
 
@@ -88,6 +89,12 @@ Files are never unlinked. The bytes in the way move into
 the original path — before the before-image is written back. A file the recalled range created is
 moved there rather than deleted.
 
+A recall has to know what the range started from, so the plugin takes one bounded copy of the
+workspace before a turn's first writing tool and stores it content-addressed under
+`$DSH_HOME/storages/dsh-rewind-plugin/{trees,blobs}`. That copy is what makes a file a shell command
+rewrote restorable: the `write` / `edit` waterfalls still supply the exact before-image for the tools
+they see, and where the snapshot covered a path its bytes are the ones that go back.
+
 ## What it needs at runtime
 
 Resolved from the profile, never bundled:
@@ -113,9 +120,17 @@ list them in `dsh.client.external` because the shell already answers them.
 
 ## Known limits
 
-- A file changed by a shell command, or by any tool that writes through its own filesystem handle,
-  never passes the `fs/write-intent` / `fs/edit-intent` waterfalls. Those changes cannot be reverted,
-  and both the confirmation dialog and the result say so instead of claiming a clean revert.
+- A file changed by a tool this plugin cannot observe — a shell command, a script the model ran, a
+  renderer — is covered by the workspace snapshot rather than by the write waterfalls. The snapshot is
+  bounded (file count, total bytes, per-file bytes, a deadline, and the tool call's abort signal), so
+  a very large tree, an unreadable file, a symlink or a timed-out walk can leave a path out. Every
+  recall reports a `coverage` verdict — `full`, `partial` or `none` — with the reason and the writing
+  tools involved, so a gap is visible instead of silent.
+- Dependency, VCS and cache directories (`node_modules`, `.git`, …) are outside coverage on purpose,
+  so a recall that ran `npm install` does not report the dependency tree. Build output such as `dist/`
+  IS walked.
+- `size` + `mtime` unchanged counts as unchanged. A writer that restores an old mtime at an unchanged
+  size is missed — the same bargain every sync tool makes.
 - The placeholder is an empty `user/message`. The DeepSeek provider's request path drops an empty
   user message, so it contributes no model-facing turn there; a provider that does not drop empty
   user content would see one extra empty message per recall.
@@ -147,6 +162,7 @@ registry release.
 | `src/cut.ts`                                             | the recall computation — anchors, the replacement range, the placeholder |
 | `src/projection.ts`                                      | the `rewindAnchors` projection, the client's whole read face             |
 | `src/routes.ts`, `src/quarantine.ts`, `src/snapshots.ts` | the quarantine routes, listing/purge, and the before-images              |
+| `src/trees.ts`                                           | the workspace snapshot store and its retention rules                     |
 | `src/recorder.ts`                                        | which file change belongs to which turn                                  |
 | `src/wire.ts`                                            | the payload shapes and error codes both halves share                     |
 | `src/client.ts`                                          | the client half: icon, picker, prefill, hidden turns, the Settings page  |

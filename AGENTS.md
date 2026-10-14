@@ -31,7 +31,8 @@ allowlists it. Run `npm run build` after changing `src/` and commit the rebuilt 
 | `src/cut.ts` | the recall computation — anchors, the replacement range, the placeholder |
 | `src/projection.ts` | the `rewindAnchors` projection, the client's entire read face |
 | `src/recorder.ts` | which file change belongs to which turn |
-| `src/snapshots.ts` | before-images, and the quarantine directory layout |
+| `src/trees.ts` | the workspace snapshot store — the second before-image source, and its retention |
+| `src/snapshots.ts` | before-images (bytes now), and the quarantine directory layout |
 | `src/quarantine.ts`, `src/routes.ts` | the manager's listing/purge and its host routes |
 | `src/wire.ts` | payload shapes and error codes both halves share |
 | `src/client.ts`, `src/client/` | browser half: icon, picker, prefill, hidden turns, Settings page |
@@ -126,9 +127,14 @@ or `npm whoami` fails with 401. That token's npm identity has publish rights to 
   request never reached the kernel. Reading is fine; different sessions never conflict. This is why
   `src/client.ts` distinguishes "the transport refused" (`rewind.error.transport`, carrying the
   kernel's own sentence) from "a capability is missing".
-- **A shell write is invisible.** `fs/write-intent` / `fs/edit-intent` are dispatched by `dsh-tool-fs`
-  only, so a file changed by a command cannot be reverted. The confirmation dialog and the result say
-  so; never let the plugin claim a clean revert.
+- **A shell write was invisible, and saying so was not enough.** `fs/write-intent` / `fs/edit-intent`
+  are dispatched by `dsh-tool-fs` only, so a file changed by a command could not be reverted — and the
+  plugin had no way to know WHICH files those were, so "the dialog and the result say so" was a claim
+  the code could not keep: a real recall reported `{"restored":6,"removed":8,"unrestorable":[]}` while
+  27 shell calls in the same range had just rewritten a sprite sheet and a `dist/` tree.
+  `docs/rewind-workspace-snapshot.md` is the change list that closes it — a bounded workspace snapshot
+  taken before a turn's first writing tool, merged with the waterfall's exact before-images, plus a
+  `coverage` verdict on the result. Never let the plugin claim a clean revert it cannot back up.
 - **The waterfall's second argument is private.** The event publishes `actor: object | undefined`, and
   the turn is read from `exec.agent.session`. When it is absent the recorder reports it rather than
   filing the change under no turn, which used to look exactly like a clean recall.

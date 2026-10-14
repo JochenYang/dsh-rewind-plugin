@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 - The official desktop client's install steps, which are not a command: its `desktop` profile is
   reserved for the Electron application, so the plugin is added from inside the app.
+- A bounded workspace snapshot as a second before-image source, taken before a turn's first writing
+  tool and stored content-addressed under `$DSH_HOME/storages/dsh-rewind-plugin/{trees,blobs}`, so a
+  file a shell command rewrote can be restored.
+- A `coverage` verdict (`full` / `partial` / `none`) with its reason and the writing tools involved,
+  carried on the command result and shown in the confirmation dialog.
+### Changed
+
+- Before-images are bytes, not text, so a binary file comes back byte for byte.
+- The recorder is keyed by session as well as turn, and a path's before-images are ordered by write
+  sequence instead of by the order their captures happened to finish.
+
+### Fixed
+
+- A file written by a shell command was neither restored nor reported: a recall answered a clean
+  success over a tree it had only partly put back.
+- A recall could restore another session's before-image when two sessions had a turn with the same
+  number writing the same path.
+- A range with no snapshot at all was reported exactly like "nothing changed".
+- Restoring a binary file corrupted it, because before-images were read and written as `utf8`.
+- Two writes to one path in one turn could restore the later before-image.
 
 ## [0.1.4] - 2026-10-09
 
