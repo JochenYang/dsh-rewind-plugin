@@ -32,7 +32,7 @@ test('a listing names the file each slot came from', async () => {
   writeFileSync(file, 'BEFORE')
 
   // A real restore, so the manifest under test is the one the feature writes.
-  const outcome = await restoreOne({ path: file, before: 'BEFORE' }, quarantineRoot(dshHome, 'session-a'), 1)
+  const outcome = await restoreOne({ path: file, before: Buffer.from('BEFORE') }, quarantineRoot(dshHome, 'session-a'), 1)
   writeFileSync(file, 'AFTER')
 
   const listing = await listQuarantine(dshHome)
