@@ -9,12 +9,28 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-17
+
+### Added
+
+- 压缩边界：撤回列表止于最近一次压缩时，列表、越界回答、选择器和确认框都会说明「压缩边界之前的消息
+  已经无法撤回」，而不是只给一个更短的列表。
+- `dsh-rewind-participants` 服务：其他插件可以注册参与者在撤回后恢复自己的状态；文件还原本身就是
+  第一个参与者，用来证明这条接缝可用。
+
+### Changed
+
+- 一次撤回先写回会话表面，再依次运行参与者，最后才丢弃该区间的改动前镜像与快照，参与者因此还能读到两者。
+
+## [0.2.0] - 2026-10-14
+
 ### Added
 
 - 官方桌面端的安装步骤（它不是一条命令）：`desktop` profile 由 Electron 应用独占，只能在应用内添加。
 - 工作区快照作为第二个改动前来源：在一个回合里第一个「可能写入」的工具之前拍摄，按内容寻址存到
   `$DSH_HOME/storages/dsh-rewind-plugin/{trees,blobs}`，命令行命令改写过的文件因此也能还原。
 - 覆盖度判定（`full` / `partial` / `none`），连同原因与涉及的写入工具，随命令结果返回并显示在确认框里。
+
 ### Changed
 
 - 改动前的镜像改为按字节保存，不再是文本，二进制文件因此能逐字节还原。
@@ -73,7 +89,9 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.1...v0.1.2

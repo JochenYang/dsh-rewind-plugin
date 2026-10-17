@@ -47,6 +47,11 @@ The quarantine page registers into `settings.section`, the settings shell's own 
 sits beside the shipped General / Models / Plugins pages. A profile without the settings shell loses
 the page and nothing else.
 
+A recall stops at the most recent compaction. A compaction replaces the history it summarised with one
+checkpoint message, so the prompts before it are no longer on the model-visible surface and the list
+cannot offer them. `/rewind` says that: the listing, an out-of-range answer, the picker and the
+confirmation dialog all name the boundary instead of showing a shorter list without a reason.
+
 ## Install
 
 ```sh
@@ -94,6 +99,17 @@ workspace before a turn's first writing tool and stores it content-addressed und
 `$DSH_HOME/storages/dsh-rewind-plugin/{trees,blobs}`. That copy is what makes a file a shell command
 rewrote restorable: the `write` / `edit` waterfalls still supply the exact before-image for the tools
 they see, and where the snapshot covered a path its bytes are the ones that go back.
+
+## For other plugins
+
+A recall changes the transcript and the working tree. A plugin that mirrored a turn — a board, an
+archive, a task list — has to put its own state back too, so the host half publishes the
+`dsh-rewind-participants` service. Declare it in your `inject`, call
+`register({ id, reconcileAfterRewind })`, and every recall runs your participant after the surface
+write, in registration order. A participant that throws or misses its 30-second deadline is logged and
+skipped — it cannot fail the recall — and the command collects each participant's result under its id
+(the file revert's tally is the one that rides the result). The file revert is itself the first
+participant, so this is the path the plugin's own feature already uses.
 
 ## What it needs at runtime
 

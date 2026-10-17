@@ -33,13 +33,14 @@ allowlists it. Run `npm run build` after changing `src/` and commit the rebuilt 
 | `src/recorder.ts` | which file change belongs to which turn |
 | `src/trees.ts` | the workspace snapshot store — the second before-image source, and its retention |
 | `src/snapshots.ts` | before-images (bytes now), and the quarantine directory layout |
+| `src/participants.ts` | the `dsh-rewind-participants` service — other plugins' reconciliation, with the file revert as its first participant |
 | `src/quarantine.ts`, `src/routes.ts` | the manager's listing/purge and its host routes |
 | `src/wire.ts` | payload shapes and error codes both halves share |
 | `src/client.ts`, `src/client/` | browser half: icon, picker, prefill, hidden turns, Settings page |
 | `cordis.patch.yml` | the one `insert` row that mounts the plugin |
 | `tests/port.test.ts` | guards on the standalone-package contract (see Traps) |
 
-Three mechanisms carry the design. Read the module header before changing any of them:
+Four mechanisms carry the design. Read the module header before changing any of them:
 
 1. **The cut is a surface replacement.** A recall appends one `user/message` carrying
    `surfaceOp: { op: 'replace', … }`; the session log stays append-only and nothing is deleted. The
@@ -51,6 +52,10 @@ Three mechanisms carry the design. Read the module header before changing any of
 3. **The quarantine is the safety net.** Every displaced file's current bytes are moved into
    `$DSH_HOME/storages/dsh-rewind-plugin/quarantine/<session>/<slot>/` beside a `manifest.json` naming
    the original path, and only then is the before-image written back.
+4. **The participant seam runs after the write.** A recall appends the surface replacement, then runs
+   every registered participant in registration order, then drops the range's before-images and
+   snapshots. A participant that throws or misses its deadline is logged and omitted from the report;
+   it cannot fail the recall. The file revert is itself the first participant.
 
 ## Public API (what SemVer protects)
 
@@ -63,7 +68,11 @@ surfaces a user or another plugin can depend on, so changing one is a version de
 - the coded host answers (`rewind.host.*`) the client dictionary keys on;
 - the quarantine routes and their prefix `/api/plugins/dsh-rewind-plugin`;
 - the quarantine directory layout under `$DSH_HOME/storages/dsh-rewind-plugin/`;
-- the package name, and the `dsh.bundle` / `dsh.client` manifest keys.
+- the package name, and the `dsh.bundle` / `dsh.client` manifest keys;
+- the `dsh-rewind-participants` service name and the `RewindParticipant` / `RewindRecallContext` /
+  `RewindParticipantRegistry` contract;
+- the plan payload's `stoppedAtCompaction` field, and the `rewind.host.compactionBoundary`,
+  `rewind.host.compactedAll` and `rewind.host.listBoundary` codes.
 
 Since 0.x the API is not stable by definition, but bump as if it were: adding a command argument, a
 setting or a route is MINOR, correcting behaviour without touching those surfaces is PATCH, and any
@@ -148,14 +157,19 @@ or `npm whoami` fails with 401. That token's npm identity has publish rights to 
   leaves that turn's tool results without their call, and a provider rejects such a transcript.
 - **The empty placeholder is provider-dependent.** The DeepSeek request path drops an empty user
   message; a provider that does not would see one extra empty message per recall.
+- **The compaction boundary assumes prefix compaction.** Every surface replacement on this line replaces
+  a prefix (compaction) or one node in place (the tool-result pruner, the loop's runtime context), so
+  the newest checkpoint is where recallable history ends. The kernel also exports
+  `compactSurfaceRegion` for a MIDDLE span; a producer that used it would leave older prompts
+  recallable and make `stoppedAtCompaction` a lie. Re-check `compactionBoundary` if one appears.
 
 ## Tests
 
 `npm test` is the whole gate. Two kinds live here:
 
 - **Behaviour suites** (`cut`, `projection`, `quarantine`, `routes`, `recorder`, `snapshots`,
-  `anchors`, `persist`, `live-hooks`, …) exercise the host logic directly, mostly against real
-  `Session` objects.
+  `participants`, `anchors`, `persist`, `live-hooks`, …) exercise the host logic directly, mostly
+  against real `Session` objects.
 - **Source-reading guards** (`inject`, `styles`, `messages`, `port`, `locales`) read the tree as text.
   That is deliberate: the client half's wiring cannot be exercised without a browser, and these catch
   the regressions that are otherwise silent — a dropped `inject` entry, a reverted slot key, a peer

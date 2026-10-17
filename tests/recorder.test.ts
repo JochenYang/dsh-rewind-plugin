@@ -33,25 +33,12 @@ import { captureBefore, restoreOne, textOf } from '../src/snapshots.ts'
 /** The session every test here uses unless it is about isolation. */
 const S = 'session-one'
 
-/**
- * Let the recorder's own async captures settle.
- *
- * `readFile`/`stat` from `node:fs/promises` resolve on the thread pool, which a
- * `setImmediate` loop can outrun: the capture is deliberately NOT awaited (it
- * must not block the write), so a test has to actually wait for the pool. A real
- * timer is the honest way to do that.
- */
-const settle = async (): Promise<void> => {
-  await new Promise((resolve) => { setTimeout(resolve, 50) })
-}
-
 test('a capture records the PRE-write content, keyed to its turn', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'rewind-rec-'))
   const file = join(dir, 'a.ts')
   writeFileSync(file, 'ORIGINAL')
   const { recorder, record } = createRecorder()
-  record(S, file, 2, 10)
-  await settle()
+  await record(S, file, 2, 10)
   // The write the hook was standing in front of.
   writeFileSync(file, 'CHANGED')
   const changes = recorder.changesForTurns(S, [2])
@@ -71,11 +58,9 @@ test('one session cannot see, or lose, another session\'s changes', async () => 
   const file = join(dir, 'a.ts')
   writeFileSync(file, 'v0')
   const { recorder, record } = createRecorder()
-  record('session-a', file, 2, 10)
-  await settle()
+  await record('session-a', file, 2, 10)
   writeFileSync(file, 'a2')
-  record('session-b', file, 2, 11)
-  await settle()
+  await record('session-b', file, 2, 11)
   assert.equal(recorder.changesForTurns('session-a', [2]).length, 1)
   assert.equal(recorder.changesForTurns('session-b', [2]).length, 1)
   assert.equal(textOf(recorder.changesForTurns('session-b', [2])[0].before), 'a2')
@@ -114,8 +99,7 @@ test('the before-image of the EARLIEST write wins, whatever order the reads fini
 test('a file that did not exist is recorded as created, not as an error', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'rewind-rec-'))
   const { recorder, record } = createRecorder()
-  record(S, join(dir, 'new.ts'), 3, 20)
-  await settle()
+  await record(S, join(dir, 'new.ts'), 3, 20)
   const changes = recorder.changesForTurns(S, [3])
   assert.equal(changes.length, 1)
   assert.equal(changes[0].before, null, 'absence is how a created file is recorded')
@@ -128,17 +112,15 @@ test('one write is recorded once, however many times the hook fires', async () =
   const file = join(dir, 'a.ts')
   writeFileSync(file, 'X')
   const { recorder, record } = createRecorder()
-  record(S, file, 1, 5)
-  record(S, file, 1, 5)
-  await settle()
+  await record(S, file, 1, 5)
+  await record(S, file, 1, 5)
   assert.equal(recorder.changesForTurns(S, [1]).length, 1)
   await rm(dir, { recursive: true, force: true })
 })
 
 test('an unreadable file is reported, not silently skipped', async () => {
   const recorderApi = createRecorder(async () => ({ kind: 'too-large' }))
-  recorderApi.record(S, '/some/huge.bin', 4, 30)
-  await settle()
+  await recorderApi.record(S, '/some/huge.bin', 4, 30)
   assert.deepEqual(recorderApi.recorder.changesForTurns(S, [4]), [])
   const failures = recorderApi.recorder.failuresForTurns(S, [4])
   assert.equal(failures.length, 1)
@@ -150,8 +132,7 @@ test('forget drops a turn that is no longer on the surface', async () => {
   const file = join(dir, 'a.ts')
   writeFileSync(file, 'X')
   const { recorder, record } = createRecorder()
-  record(S, file, 1, 5)
-  await settle()
+  await record(S, file, 1, 5)
   assert.equal(recorder.size(), 1)
   recorder.forget(S, [1])
   assert.equal(recorder.size(), 0)

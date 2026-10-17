@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-17
+
+### Added
+
+- The compaction boundary, named wherever a recall's list ends: the listing, an out-of-range answer, the
+  picker and the confirmation dialog now say that messages before the newest compaction are no longer
+  recallable, instead of offering a shorter list without a reason.
+- A `dsh-rewind-participants` service, so another plugin can restore its own state after a recall. The
+  file revert is its first participant, which is what proves the seam works.
+
+### Changed
+
+- A recall runs its participants after the surface write and before it drops the range's before-images
+  and snapshots, so a participant can still read both.
+
+## [0.2.0] - 2026-10-14
+
 ### Added
 
 - The official desktop client's install steps, which are not a command: its `desktop` profile is
@@ -18,6 +35,7 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
   file a shell command rewrote can be restored.
 - A `coverage` verdict (`full` / `partial` / `none`) with its reason and the writing tools involved,
   carried on the command result and shown in the confirmation dialog.
+
 ### Changed
 
 - Before-images are bytes, not text, so a binary file comes back byte for byte.
@@ -83,7 +101,9 @@ First published release.
 - The port itself: the `@dsh-app` suite's rewind plugin adapted into a standalone package for stock
   DeepSeek Harness. Never published; `0.1.1` is the first release.
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.1...v0.1.2
