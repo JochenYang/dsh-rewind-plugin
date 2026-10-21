@@ -34,13 +34,9 @@
  * `SessionFormatError: system/message does not match an open turn and step`.
  * `user/message` is not a step event type, so it carries no such requirement;
  * {@link placeholderData} builds it with empty content and this plugin's own
- * source kind, and the DeepSeek provider's request path drops an empty user
- * message so it contributes no model-facing turn while `deriveEventMessage` still
- * keeps it on the surface. That drop is PROVIDER behaviour, not a kernel
- * guarantee — `dsh-llm-pi-ai` sends an empty user message as-is
- * (`dsh-llm-pi-ai/lib/index.js`) — so switching providers would put one empty
- * user message into the request.
- * Full reasoning and the measured surface: `scratch/probe-rewind-persist.mjs`.
+ * source kind, and the request path drops an empty user message so it
+ * contributes no model-facing turn while `deriveEventMessage` still keeps it on
+ * the surface. Full reasoning and the measured surface: `scratch/probe-rewind-persist.mjs`.
  *
  * The cut also always starts on a user message, which is by construction the
  * first node of its turn. That matters: a cut landing mid-turn leaves the

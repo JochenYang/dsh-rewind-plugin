@@ -39,7 +39,7 @@ each one, and where the bytes that were in the way end up. Nothing is deleted.
 | Surface                          | Where                                                                                                               |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | Per-message recall icon          | hover a user message in the transcript                                                                              |
-| `/rewind`                        | bare lists the recallable messages; `/rewind <n>` recalls one; `/rewind plan <n>` previews without doing it         |
+| `/rewind`                        | bare lists the recallable messages; `/rewind <n>` recalls one; `/rewind plan <n>` previews without doing it; `/rewind conversation <n>` recalls the messages and leaves every file alone (the same choice the confirmation dialog offers) |
 | Composer prefill                 | the recalled text returns to the input box, once per recall                                                         |
 | **Settings → Recall quarantine** | its own page in Settings: every displaced file, grouped by session, discard per row or per session behind a confirm |
 

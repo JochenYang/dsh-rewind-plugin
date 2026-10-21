@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-21
+
+### Added
+
+- A messages-only recall: `/rewind conversation <n>` cuts the messages and leaves every file alone, and
+  the confirmation dialog offers the same choice as a scope control. This is the case where the file
+  work was right and only the message was wrong — before it, the only way was to recall with files and
+  put them back by hand. That scope KEEPS the range's before-images and snapshots: no file was touched,
+  so those are the only record that could ever restore them, and dropping them would make the changes
+  unrecoverable.
+- `/rewind plan conversation <n>` — the preview answers for the scope the recall will use, so the
+  dialog never lists a file it will not touch.
+
+### Changed
+
+- The workspace snapshot is taken when a turn OPENS, not at the turn's first writing tool. That earlier
+  moment came after the user may have edited files by hand, so a recall treated those edits as the
+  range's own work and undid them; a recall now returns the directory to the state it had when the
+  message was sent. A failed snapshot releases its claim, so the tool gate can still take one later in
+  the turn.
+
+### Fixed
+
+- The messages-only preview resolved ordinal 0 because the preview verbs were enumerated by hand when
+  the ordinal was extracted and the new one was missing from that list; a perfectly recallable message
+  was answered as "cannot recall". The ordinal is now read from the parsed variant.
+
+
 ## [0.3.0] - 2026-10-17
 
 ### Added
@@ -101,7 +129,8 @@ First published release.
 - The port itself: the `@dsh-app` suite's rewind plugin adapted into a standalone package for stock
   DeepSeek Harness. Never published; `0.1.1` is the first release.
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4

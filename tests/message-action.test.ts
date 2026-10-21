@@ -35,19 +35,19 @@ test('the icon reads its session and projection from the slot props', () => {
 
 test('the icon resolves the ordinal from the projection, not from the seq', () => {
   assert.match(action, /anchors\?\.find\(\(item\) => item\.seq === seq\)/)
-  assert.match(action, /deps\.plan\(anchor\.n, sessionId\)/)
+  assert.match(action, /deps\.plan\(anchor\.n, sessionId, 'withFiles'\)/)
 })
 
 test('the icon PREVIEWS before it recalls', () => {
   // A recall rewrites files. Performing it on the click and reporting afterwards
   // asks the user to consent to something already done, so the click asks the
   // host what would happen and opens the confirmation instead.
-  assert.match(action, /void deps\.plan\(anchor\.n, sessionId\)\.then\(\(planned\) => \{/)
+  assert.match(action, /void deps\.plan\(anchor\.n, sessionId, 'withFiles'\)\.then\(\(planned\) => \{/)
   assert.match(action, /setPending\(\{ n: anchor\.n, sessionId, plan: planned\.plan \}\)/)
   assert.match(action, /<ConfirmDialog/)
   // The recall itself is wired to the dialog's confirm, not to the icon's click.
-  assert.match(action, /onConfirm=\{\(\) => \{/)
-  assert.match(action, /void deps\.recall\(target\.n, target\.sessionId\)/)
+  assert.match(action, /onConfirm=\{\(mode\) => \{/)
+  assert.match(action, /void deps\.recall\(target\.n, target\.sessionId, mode\)/)
 })
 
 test('the icon is hidden when the node is not recallable', () => {
@@ -83,7 +83,7 @@ test('a refused recall is visible, not silent', () => {
   // The icon hands the whole outcome back and reports it. A synthetic
   // `{ ok: false }` read as a dead button; the host's own reason ("the turn is
   // still running") is the difference between a refused recall and a broken one.
-  assert.match(action, /void deps\.recall\(target\.n, target\.sessionId\)\.then\(\(outcome\) => \{/)
+  assert.match(action, /void deps\.recall\(target\.n, target\.sessionId, mode\)\.then\(\(outcome\) => \{/)
   // The overlay is handed a FINISHED sentence. Passing it `{code}` printed the
   // raw dictionary key (`rewind.host.busy`) with every param dropped.
   assert.match(action, /showRecallNote\(outcome\.note\)/)
@@ -96,7 +96,7 @@ test('the preview asks a command that cannot change anything', () => {
   // preview that could change things is not a preview. Its refusals arrive as
   // codes and are turned into sentences where `t` lives.
   assert.match(entry, /function planRecall/)
-  assert.match(entry, /remote\.execute\(sessionId, `\/rewind plan \$\{n\}`, \[\]\)/)
+  assert.match(entry, /`\/rewind plan \$\{String\(n\)\}`/)
   assert.match(entry, /return \{ note: coded === undefined \? t\('rewind\.error\.unavailable'\) : t\(coded\.code, coded\.params\) \}/)
 })
 
@@ -120,7 +120,7 @@ test('the confirmation composes the host primitives instead of redrawing them', 
     fileURLToPath(new URL('../src/client/confirm-dialog.tsx', import.meta.url)),
     'utf8',
   )
-  assert.match(dialog, /import \{ Button, DiffBlock, Modal \} from '@deepseek-ai\/dsh-client-ui-primitives'/)
+  assert.match(dialog, /import \{ Button, DiffBlock, Modal, SegmentedControl \} from '@deepseek-ai\/dsh-client-ui-primitives'/)
   assert.match(dialog, /<Modal\b/)
   assert.match(dialog, /<Button\b/)
   assert.match(dialog, /<DiffBlock\b/)

@@ -9,6 +9,27 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-21
+
+### Added
+
+- 只撤回对话：`/rewind conversation <n>` 撤回消息而文件保持不动，确认框里也提供同样的范围开关。这对应
+  「文件改对了、只有话说错了」的情形——在此之前只能先连文件一起撤回、再手工改回来。这个范围会**保留**
+  该轮的备份与快照：文件没被改过，那些数据是它们唯一还能还原的依据，删掉就再也撤不回来了。
+- `/rewind plan conversation <n>`：预演按撤回将要使用的范围作答，清单不会列出不会被改动的文件。
+
+### Changed
+
+- 工作区快照改为在每轮**开始时**采集，不再等到本轮第一个写文件的工具。原来那个时机在用户手工改过
+  文件之后，撤回会把那些改动当成这一轮做的、一并还原掉；现在撤回还原的是**发这条消息那一刻**的
+  目录状态。快照失败时会释放占位，让后面的工具门禁仍能补拍。
+
+### Fixed
+
+- 只撤回对话的预演按序号取消息时，动词被逐个列举而新动词漏在名单外，序号落成 0，明明能撤回的消息
+  被答成「无法撤回」。现在序号直接从解析结果取。
+
+
 ## [0.3.0] - 2026-10-17
 
 ### Added
@@ -89,7 +110,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.3...v0.1.4

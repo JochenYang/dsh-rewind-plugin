@@ -61,9 +61,6 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // Type-only: pulls the slots service face (ctx.slots) into this unit.
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
-// Type-only: pulls the settings slot contract into scope, so `settings.section`
-// and its owner props are the SHIPPED declarations rather than a local copy.
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 // Type-only: pulls the locale runtime's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: pulls the ctx.commandUi merge and the popup/command-row prop types.
@@ -80,18 +77,17 @@ import { anchorsToOptions, type RewindView } from './client/popup.ts'
 import type { RecallOutcome } from './client/outcome.ts'
 import { coverageSentence, hostCode, type FileReportLike } from './client/messages.ts'
 import type { Translate } from './client/messages.ts'
-import type { RevertPlan } from './wire.ts'
+// Type-only: pulls the settings slot contract into scope, so `settings.section`
+// and its owner props are the SHIPPED declarations rather than a local copy.
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import { transportFailure, transportNote } from './client/transport.ts'
+import type { RecallMode, RevertPlan } from './wire.ts'
 import { QuarantineSection } from './client/quarantine-section.tsx'
 import { showRecallNote, mountRecallNoteHost } from './client/recall-note-host.tsx'
 import { adoptStyles } from './client/styles.ts'
 import { en as rewindEn, NS as REWIND_NS, zh as rewindZh, type RewindKey } from './client/locales.ts'
 import { REWIND_COMMAND, REWIND_PROJECTION_KEY } from './wire.ts'
 
-// --- The quarantine page registers into `settings.section`, the settings
-// shell's own additive seat: `dsh-client-ui-settings` DECLARES that key, so no
-// `SlotMap` merge belongs here (re-declaring a shipped slot is a duplicate member
-// in a merged interface, and the registry throws on a key nobody declared). The
-// page's nav identity is the registration's `id`/`order`/`label`.
 
 // The locale namespace table lives in ui-slots: this merge is what makes
 // `ctx.locale.register`/`bind` key-checked — a key missing from (or extra in)
@@ -142,12 +138,13 @@ interface RemoteCommands {
     ok: boolean
     value?: { result?: { kind: string, text?: string, sourceEventSeq?: number } }
     /**
-     * The kernel's own envelope for a refused call, when it sends one.
+     * The kernel's envelope for a call it refused, when it sends one.
      *
      * Read for its message only: a refused call carries no command result, so
-     * that message is the one honest explanation of why.
+     * that message is the one honest explanation of why — a session whose write
+     * handle is held, a released session reference, a malformed envelope.
      */
-    error?: { message?: string }
+    error?: unknown
   }>
 }
 
@@ -349,8 +346,8 @@ export function apply(ctx: ClientContext): void {
     t,
     recall: (ordinal: number, sessionId: string) =>
       recallByOrdinal(ctx, t, ordinal, sessionId as SessionId, handled),
-    plan: (ordinal: number, sessionId: string) =>
-      planRecall(ctx, t, ordinal, sessionId as SessionId),
+    plan: (ordinal: number, sessionId: string, mode?: RecallMode) =>
+      planRecall(ctx, t, ordinal, sessionId as SessionId, mode),
   }
   // `locale: 'chat'` matches how the built-in registers this slot: it supplies
   // the chat-bound `t` seat the keyed props require, and the wrapper forwards
@@ -480,13 +477,19 @@ async function planRecall(
   t: Translate,
   n: number,
   sessionId: SessionId,
+  mode: RecallMode = 'withFiles',
 ): Promise<{ readonly plan?: RevertPlan, readonly note?: string }> {
   const remote = (ctx.get('remote') as { commands?: RemoteCommands } | undefined)?.commands
   if (remote === undefined) return { note: t('rewind.error.unavailable') }
   if (typeof sessionId !== 'string' || sessionId === '') return { note: t('rewind.error.noSession') }
   try {
-    const result = await remote.execute(sessionId, `/rewind plan ${n}`, [])
+    // The scope travels with the preview, so the dialog never lists files the
+    // confirm button will not touch.
+    const command = mode === 'conversationOnly' ? `/rewind plan conversation ${String(n)}` : `/rewind plan ${String(n)}`
+    const result = await remote.execute(sessionId, command, [])
     const outcome = result.value?.result
+    // No command outcome means the transport refused: the kernel's own message
+    // is the only explanation, and "a capability is missing" would be a lie.
     if (!result.ok || outcome === undefined) return { note: transportNote(t, result.error) }
     if (outcome.kind !== 'success') {
       const coded = hostCode(outcome.text)
@@ -550,15 +553,26 @@ async function recallByOrdinal(
   n: number,
   sessionId: SessionId,
   handled: Set<number>,
+  mode: RecallMode = 'withFiles',
 ): Promise<RecallOutcome> {
   const remote = (ctx.get('remote') as { commands?: RemoteCommands } | undefined)?.commands
   if (remote === undefined) return { ok: false, code: 'rewind.error.unavailable' }
   const target = sessionId
   if (typeof target !== 'string' || target === '') return { ok: false, code: 'rewind.error.noSession' }
   try {
-    const result = await remote.execute(target, `/rewind ${n}`, [])
+    // The verb, not a flag: the host parses `conversation <n>` as its own
+    // command shape, so what the dialog chose and what the command does cannot
+    // drift apart through a stringly-typed option.
+    const command = mode === 'conversationOnly' ? `/rewind conversation ${String(n)}` : `/rewind ${String(n)}`
+    const result = await remote.execute(target, command, [])
     const outcome = result.value?.result
-    if (!result.ok || outcome === undefined) return transportFailure(result.error)
+    if (!result.ok || outcome === undefined) {
+      // The transport refused without a command outcome. `result.error` is the
+      // kernel's own envelope when it carries one, and its message is the honest
+      // diagnostic; "a capability is missing" is the sentence for a service that
+      // really is absent, which is why it stays on the `remote` check above.
+      return transportFailure(result.error)
+    }
     if (outcome.kind !== 'success') {
       // A refusal is a coded host answer: hand the code up so the component
       // renders it in its own dictionary, rather than reporting a generic
@@ -585,50 +599,6 @@ async function recallByOrdinal(
   } catch (error) {
     return transportFailure(error)
   }
-}
-
-/**
- * A refused transport call, as the outcome the components render.
- *
- * The transport answers a refused call with its own message and NO command
- * outcome, so there is no coded host answer to render. That message is the honest
- * diagnostic — a session whose write handle is already held, a service that is
- * really absent, a malformed envelope — and the "capability missing" sentence is
- * reserved for the case where nothing explained itself. Reporting every refusal
- * the same way is what made a session write conflict read as a missing feature.
- *
- * @param error - the transport envelope, when it carried a message.
- * @returns the outcome to render.
- */
-function transportFailure(error: unknown): RecallOutcome {
-  const detail = transportDetail(error)
-  return detail === undefined
-    ? { ok: false, code: 'rewind.error.unavailable' }
-    : { ok: false, code: 'rewind.error.transport', params: { detail } }
-}
-
-/**
- * {@link transportFailure}'s prose-shaped twin, for the paths that report a
- * finished sentence instead of an outcome.
- *
- * @param t - this plugin's locale-bound `t`.
- * @param error - the transport envelope, when it carried a message.
- * @returns the sentence to show.
- */
-function transportNote(t: Translate, error: unknown): string {
-  const detail = transportDetail(error)
-  return detail === undefined
-    ? t('rewind.error.unavailable')
-    : t('rewind.error.transport', { detail })
-}
-
-/** The kernel's own sentence for a refused call, when it sends one. */
-function transportDetail(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null) return undefined
-  const message = (error as { message?: unknown }).message
-  if (typeof message !== 'string') return undefined
-  const trimmed = message.trim()
-  return trimmed === '' ? undefined : trimmed
 }
 
 /**
