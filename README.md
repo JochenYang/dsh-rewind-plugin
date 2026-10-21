@@ -61,6 +61,9 @@ dsh plugin --profile web add @jochenyang/dsh-rewind-plugin
 # or straight from the release tarball, no registry involved
 dsh plugin --profile web add https://github.com/JochenYang/dsh-rewind-plugin/releases/latest/download/dsh-rewind-plugin.tgz
 
+# to pin a version, swap latest/download/<file> for download/v<x.y.z>/dsh-rewind-plugin-<x.y.z>.tgz
+# (use this form wherever a download URL is recorded, so the link names its build)
+
 # or from the repository, built on install
 dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```

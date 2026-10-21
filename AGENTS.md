@@ -97,13 +97,35 @@ npm run build && npm run typecheck && npm test
 git add -A && git commit -m 'chore(release): <x.y.z>' && git push
 # 3. publish, then attach the same tarball to the release
 npm publish
-npm pack --pack-destination <dir> && cp <dir>/<name>-<x.y.z>.tgz <dir>/dsh-rewind-plugin.tgz
-gh release create v<x.y.z> <dir>/dsh-rewind-plugin.tgz --title 'v<x.y.z>' --notes '…' --latest
+npm pack --pack-destination <dir>
+# npm pack names a scoped package jochenyang-dsh-rewind-plugin-<x.y.z>.tgz; the asset
+# name is the file name, so rename before uploading
+cp <dir>/jochenyang-dsh-rewind-plugin-<x.y.z>.tgz <dir>/dsh-rewind-plugin-<x.y.z>.tgz
+cp <dir>/dsh-rewind-plugin-<x.y.z>.tgz <dir>/dsh-rewind-plugin.tgz
+gh release create v<x.y.z> \
+  <dir>/dsh-rewind-plugin-<x.y.z>.tgz <dir>/dsh-rewind-plugin.tgz \
+  --title 'v<x.y.z>' --notes '…' --latest
 ```
 
-Keep the Release asset name **version-free** (`dsh-rewind-plugin.tgz`): `README.md` links
-`releases/latest/download/dsh-rewind-plugin.tgz`, and a versioned asset name would 404 the moment the
-next release is cut.
+Every release carries **two copies of the same bytes** under two names, and both are part of the
+contract:
+
+- `dsh-rewind-plugin-<x.y.z>.tgz` is the **canonical** asset. It pins a version, so a download URL
+  says which build it returns and an old link keeps working after the next release. Anything that
+  records a download location (an issue, a changelog entry, another project's lockfile) uses this
+  name.
+- `dsh-rewind-plugin.tgz` is the **floating alias**, kept only because `README.md` and
+  `README.zh-CN.md` link `releases/latest/download/dsh-rewind-plugin.tgz` — `releases/latest` needs a
+  version-free name, and a versioned one there would 404 the moment the next release is cut. Do not
+  cite it anywhere else.
+
+From the next version on, `gh release create` must be given both files. A release missing the
+versioned asset is incomplete even when the alias is present.
+
+`v0.4.0` was backfilled by hand — the alias was downloaded and re-uploaded under the versioned name, so
+both assets are the same bytes (`sha256:0d50c18…6c3bf`) and neither was rebuilt from the working tree.
+Rebuilding a released version would have shipped docs that had moved on since. Releases `v0.3.0` and
+earlier keep the alias only.
 
 Publishing needs a token: `$env:NPM_TOKEN` is not in the process environment, it lives in the User
 scope — inject it with

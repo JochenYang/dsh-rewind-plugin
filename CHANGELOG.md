@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Changed
+
+- Release assets now carry the version: the canonical file is `dsh-rewind-plugin-<x.y.z>.tgz`, so a
+  download URL names the build it returns and keeps working after later releases. The version-free
+  `dsh-rewind-plugin.tgz` stays as a floating alias because `releases/latest` needs one, and both files
+  ship on every release from here on. `0.4.0` was backfilled with the versioned asset (the alias
+  re-uploaded, not rebuilt); earlier releases keep the alias only.
+
 ## [0.4.0] - 2026-10-21
 
 ### Added

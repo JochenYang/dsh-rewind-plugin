@@ -57,6 +57,9 @@ dsh plugin --profile web add @jochenyang/dsh-rewind-plugin
 # 或者直接用 Release 里的 tgz，不经过 registry
 dsh plugin --profile web add https://github.com/JochenYang/dsh-rewind-plugin/releases/latest/download/dsh-rewind-plugin.tgz
 
+# 要固定版本，把 latest/download/<文件名> 换成 download/v<x.y.z>/dsh-rewind-plugin-<x.y.z>.tgz
+# （需要记录下载地址时用这个形式，链接本身就说明了它指向哪个构建）
+
 # 或者从仓库装，安装时自动构建
 dsh plugin --profile web add github:JochenYang/dsh-rewind-plugin
 ```

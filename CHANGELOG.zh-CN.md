@@ -9,6 +9,13 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Release 的资产名改为带版本号：正式文件是 `dsh-rewind-plugin-<x.y.z>.tgz`，下载链接因此能说明它指向哪个
+  构建，并且在后续版本发布后仍然可用。无版本号的 `dsh-rewind-plugin.tgz` 保留为浮动别名，因为
+  `releases/latest` 需要一个不带版本号的名字；此后每次发布两个文件都传。`0.4.0` 已回填带版本号的
+  资产（由别名原样重传，未重新构建）；更早的 Release 只有别名。
+
 ## [0.4.0] - 2026-10-21
 
 ### Added
