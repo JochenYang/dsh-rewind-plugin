@@ -128,6 +128,22 @@ test('the stylesheet braces balance, so one rule cannot swallow the rest', () =>
   assert.equal(opens, closes, `unbalanced braces in cssText: ${opens} "{" vs ${closes} "}"`)
 })
 
+test('the confirm dialog cannot grow past the viewport', () => {
+  // Measured: a recall touching dozens of files rendered every row, the dialog
+  // grew taller than the window, and the confirm button — the one control the
+  // dialog exists for — was pushed off screen. The list is bounded and scrolls
+  // inside that bound; the cap is in vh so it follows the window rather than a
+  // pixel guess.
+  const list = source.slice(source.indexOf('.dshRewind-fileList {'), source.indexOf('.dshRewind-fileRow {'))
+  assert.match(list, /max-height:\s*min\(\d+vh,\s*\d+px\)/)
+  assert.match(list, /overflow-y:\s*auto/)
+  assert.match(list, /overscroll-behavior:\s*contain/)
+  // The negative margin and its matching padding keep a focus ring from being
+  // clipped by the scroll container; both use the same 2px/4px pair.
+  assert.match(list, /padding:\s*2px 4px/)
+  assert.match(list, /margin:\s*-2px -4px/)
+})
+
 test('the stylesheet only uses theme tokens for colour', () => {
   const body = source.slice(source.indexOf('const cssText = `'))
   const hex = body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []

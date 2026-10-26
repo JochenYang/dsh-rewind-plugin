@@ -190,8 +190,8 @@ or `npm whoami` fails with 401. That token's npm identity has publish rights to 
 `npm test` is the whole gate. Two kinds live here:
 
 - **Behaviour suites** (`cut`, `projection`, `quarantine`, `routes`, `recorder`, `snapshots`,
-  `participants`, `anchors`, `persist`, `live-hooks`, …) exercise the host logic directly, mostly
-  against real `Session` objects.
+  `participants`, `transport`, `anchors`, `persist`, `live-hooks`, …) exercise the host
+  logic directly, mostly against real `Session` objects.
 - **Source-reading guards** (`inject`, `styles`, `messages`, `port`, `locales`) read the tree as text.
   That is deliberate: the client half's wiring cannot be exercised without a browser, and these catch
   the regressions that are otherwise silent — a dropped `inject` entry, a reverted slot key, a peer

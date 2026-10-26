@@ -10,7 +10,7 @@
  */
 import { buildSync } from 'esbuild'
 import { execFileSync } from 'node:child_process'
-import { readdirSync } from 'node:fs'
+import { readdirSync, existsSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -18,6 +18,11 @@ const here = dirname(fileURLToPath(import.meta.url))
 const pluginRoot = join(here, '..')
 const testsDir = join(pluginRoot, 'tests')
 const outDir = join(pluginRoot, '.test-dist')
+
+// esbuild writes the bundles it builds and leaves everything else, so a bundle
+// whose source file was deleted stays behind and keeps running. Measured: a deleted
+// test reported a failure against a fixture that no longer existed.
+if (existsSync(outDir)) rmSync(outDir, { recursive: true, force: true })
 
 const entryPoints = readdirSync(testsDir)
   .filter(name => name.endsWith('.test.ts'))

@@ -9,12 +9,19 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-26
+
 ### Changed
 
 - Release 的资产名改为带版本号：正式文件是 `dsh-rewind-plugin-<x.y.z>.tgz`，下载链接因此能说明它指向哪个
   构建，并且在后续版本发布后仍然可用。无版本号的 `dsh-rewind-plugin.tgz` 保留为浮动别名，因为
   `releases/latest` 需要一个不带版本号的名字；此后每次发布两个文件都传。`0.4.0` 已回填带版本号的
   资产（由别名原样重传，未重新构建）；更早的 Release 只有别名。
+
+### Fixed
+
+- 撤回确认框的文件列表改为有上限、在框内滚动。碰到影响几十个文件的撤回时，每一行都会被渲染出来，
+  对话框高度超过视口，把「确认撤回」这个对话框唯一的按钮挤出屏幕。
 
 ## [0.4.0] - 2026-10-21
 
@@ -117,7 +124,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0

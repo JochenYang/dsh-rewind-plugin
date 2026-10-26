@@ -24,6 +24,10 @@ const entry = readFileSync(
   fileURLToPath(new URL('../src/client.ts', import.meta.url)),
   'utf8',
 )
+const dialogSource = readFileSync(
+  fileURLToPath(new URL('../src/client/confirm-dialog.tsx', import.meta.url)),
+  'utf8',
+)
 
 test('the icon reads its session and projection from the slot props', () => {
   // The slot is session-scoped, so the standard kit supplies both. A
@@ -246,4 +250,35 @@ test('the per-message tooltip is short', () => {
   const hint = locales.match(/'rewind\.message\.action\.hint':\s*'([^']*)'/)
   assert.ok(hint, 'icon hint key not found')
   assert.ok(hint[1].length <= 12, `icon tooltip too long: ${hint[1]}`)
+})
+
+
+test('the confirmation offers the two scopes and defaults to touching files', () => {
+  // The scope is chosen IN the dialog, because it decides whether the file list
+  // above it is going to be acted on. The default stays `withFiles`: that is what
+  // the button has always done, and a silent switch to "messages only" would be a
+  // recall that quietly stopped putting files back.
+  assert.match(dialogSource, /const \[mode, setMode\] = useState<RecallMode>\('withFiles'\)/u,
+    'the dialog no longer defaults to the ordinary recall')
+  assert.match(dialogSource, /<SegmentedControl/u, 'the scope control is gone')
+  assert.match(dialogSource, /value: 'withFiles' as const/u, 'the files scope is gone')
+  assert.match(dialogSource, /value: 'conversationOnly' as const/u, 'the messages-only scope is gone')
+  // The choice resets with the dialog, so the next recall does not inherit a
+  // decision made about a different message.
+  assert.match(dialogSource, /setMode\('withFiles'\)/u, 'the scope is not reset when the dialog closes')
+})
+
+test('a messages-only choice hides the file rows instead of dimming them', () => {
+  // A list of files the recall will NOT touch is noise in a dialog whose job is
+  // to say what will happen.
+  assert.match(dialogSource, /mode === 'withFiles' && rows\.length > 0 &&/u,
+    'the file list is rendered even when the files will not be touched')
+})
+
+test('the chosen scope reaches the host as a verb, not as a flag', () => {
+  // The host parses `conversation <n>` as its own command shape, so the dialog's
+  // choice and the command's behaviour cannot drift through a stringly-typed
+  // option that one side ignores.
+  assert.match(entry, /mode === 'conversationOnly' \? `\/rewind conversation \$\{String\(n\)\}`/u,
+    'the client no longer sends the messages-only verb')
 })

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-26
+
 ### Changed
 
 - Release assets now carry the version: the canonical file is `dsh-rewind-plugin-<x.y.z>.tgz`, so a
@@ -16,6 +18,12 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
   `dsh-rewind-plugin.tgz` stays as a floating alias because `releases/latest` needs one, and both files
   ship on every release from here on. `0.4.0` was backfilled with the versioned asset (the alias
   re-uploaded, not rebuilt); earlier releases keep the alias only.
+
+### Fixed
+
+- The confirmation dialog's file list is bounded and scrolls inside that bound. A recall that touched
+  dozens of files rendered every row, so the dialog grew past the viewport and pushed the confirm
+  button — the one control the dialog exists for — off screen.
 
 ## [0.4.0] - 2026-10-21
 
@@ -137,7 +145,8 @@ First published release.
 - The port itself: the `@dsh-app` suite's rewind plugin adapted into a standalone package for stock
   DeepSeek Harness. Never published; `0.1.1` is the first release.
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.1.4...v0.2.0
