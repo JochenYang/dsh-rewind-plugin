@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-03
+
 ### Fixed
 
 - 回合的工作区快照还在遍历时到达的工具调用会跳过等待，于是它的写入落进了正在被遍历的目录，这个回合把
@@ -140,7 +142,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.2.0...v0.3.0
