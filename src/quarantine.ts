@@ -8,11 +8,13 @@
  *
  * ## Why the manifest, not the directory name
  *
- * A slot's directory is named from a timestamp and a path hash. That is enough to
- * keep two same-second slots apart and nothing else: it does not say which file
- * the content came from, so a listing built from names alone could only ever show
- * `replaced`. Every slot therefore carries a `manifest.json` written at the same
- * moment as the content, and this module reads it.
+ * A slot's directory is named from a timestamp, a path hash and a random tail.
+ * The stamp and hash keep slots ordered and attributable; the tail is what keeps
+ * two restores in the same millisecond from landing in one slot and overwriting
+ * each other's quarantine copy. None of it says which file the content came from,
+ * so a listing built from names alone could only ever show `replaced`. Every slot
+ * therefore carries a `manifest.json` written at the same moment as the content,
+ * and this module reads it.
  *
  * A slot whose manifest is missing or unreadable is still listed — marked
  * unknown — rather than hidden. An entry a user cannot see is an entry they

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Fixed
+
+- A tool call that arrived while the turn's workspace snapshot was still walking used to skip the
+  wait, so its write landed in the tree being captured and the turn recorded a mid-turn state as its
+  starting state — while the recall still reported `coverage: full`. Later callers now join the walk.
+- The recorder's history is bounded, and trimming dropped the oldest before-images without telling
+  the recall, so a range whose files had been trimmed still answered `full`. The recorder now names
+  the newest `seq` it discarded and that range reports `partial` with reason `recorderTrimmed`.
+- A participant that outlived its deadline was abandoned rather than stopped: the file revert kept
+  writing after the recall answered "not restored", racing the user's retry on the same paths. The
+  deadline now aborts it first, and the targets it never reached are reported as `cancelled`.
+- A cancelled snapshot walk kept the turn's claim, so every later tool gate awaited a promise that
+  recorded nothing. A walk that reports `complete: false` now releases it.
+- Two restores in the same millisecond could share a quarantine slot — the stamp is millisecond-
+  accurate and the path hash is a 32-bit fold — and the second overwrote the first displaced copy.
+  The slot name now carries a random tail.
+- A collection pass could delete the bytes a snapshot names. It scanned manifests and then deleted, so a
+  capture that committed between those two steps was absent from its `referenced` set and its blobs
+  looked like orphans. Measured with a collector looping beside two captures: 172–193 of 200 blobs
+  deleted, leaving a snapshot that reads back as "every file changed" with the before-images gone. Each
+  capture now releases only its own holds, and a capture's commit is serialized against the pass.
+
 ## [0.4.1] - 2026-10-26
 
 ### Changed

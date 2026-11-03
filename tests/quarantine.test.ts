@@ -18,7 +18,7 @@ import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isSafeSegment, listQuarantine, purgeQuarantine } from '../src/quarantine.ts'
-import { MANIFEST_NAME, quarantineRoot, restoreOne } from '../src/snapshots.ts'
+import { MANIFEST_NAME, quarantineRoot, restoreOne, restoreTargets } from '../src/snapshots.ts'
 
 /** A scratch `$DSH_HOME`. */
 function home(): string {
@@ -142,4 +142,83 @@ test('a purge by session keeps the other sessions intact', async () => {
   const after = await listQuarantine(dshHome)
   assert.deepEqual(after.groups.map((group) => group.sessionId), ['two'])
   await rm(dshHome, { recursive: true, force: true })
+})
+
+test('two restores in the same millisecond never share a slot', async () => {
+  // THE DEFECT this pins: a slot name was `stamp-hash`, and the stamp is only
+  // millisecond-accurate while the hash is a 32-bit fold that `Math.abs` maps onto
+  // one value for `h` and `-h`. Anything restored into the same slot overwrote the
+  // previous quarantined copy without a trace — the safety net losing the thing it
+  // exists to keep. Restoring one path twice is the deterministic case: same path,
+  // same hash, same millisecond.
+  const dshHome = home()
+  const work = mkdtempSync(join(tmpdir(), 'rewind-work-'))
+  try {
+    const root = quarantineRoot(dshHome, 'session-a')
+    const file = join(work, 'one.ts')
+    writeFileSync(file, 'AFTER-FIRST')
+
+    const now = 1_700_000_000_000
+    const a = await restoreOne({ path: file, before: Buffer.from('BEFORE-ONE') }, root, now)
+    // The restore put BEFORE-ONE back, so the second restore displaces different
+    // bytes: one slot would silently lose the first copy.
+    writeFileSync(file, 'AFTER-SECOND')
+    const b = await restoreOne({ path: file, before: Buffer.from('BEFORE-TWO') }, root, now)
+
+    assert.equal(a.kind, 'restored')
+    assert.equal(b.kind, 'restored')
+    assert.notEqual(a.slot, b.slot, 'one millisecond and one path is still not one slot')
+
+    // Both displaced copies survive, which is what the collision destroyed.
+    const listing = await listQuarantine(dshHome)
+    assert.equal(listing.entries, 2, 'both displaced files are listed')
+    const displaced = listing.groups[0].entries.map((entry) => readFileSync(join(root, entry.slot, 'replaced'), 'utf8'))
+    assert.deepEqual(displaced.sort(), ['AFTER-FIRST', 'AFTER-SECOND'])
+  } finally {
+    await rm(dshHome, { recursive: true, force: true })
+    await rm(work, { recursive: true, force: true })
+  }
+})
+
+test('an aborted restore stops writing and names what it never reached', async () => {
+  // THE DEFECT this pins: the participant deadline only stopped WAITING. The restore
+  // kept writing files after the recall had already answered "not restored", so the
+  // user's obvious next action — recall again — raced it on the same paths.
+  const dshHome = home()
+  const work = mkdtempSync(join(tmpdir(), 'rewind-work-'))
+  try {
+    const root = quarantineRoot(dshHome, 'session-a')
+    const first = join(work, 'first.ts')
+    const second = join(work, 'second.ts')
+    writeFileSync(first, 'AFTER-ONE')
+    writeFileSync(second, 'AFTER-TWO')
+
+    const controller = new AbortController()
+    controller.abort()
+    const warned: string[] = []
+    const result = await restoreTargets(
+      [
+        { path: first, before: Buffer.from('BEFORE-ONE') },
+        { path: second, before: Buffer.from('BEFORE-TWO') },
+      ],
+      root,
+      1,
+      1024,
+      { warn: (message) => { warned.push(message) } },
+      controller.signal,
+    )
+
+    assert.equal(result.restored, 0, 'an aborted restore restores nothing')
+    assert.deepEqual(
+      result.unrestorable.map((entry) => entry.reason),
+      ['cancelled', 'cancelled'],
+      'and every file it never reached is named, not dropped from the report',
+    )
+    assert.equal(readFileSync(first, 'utf8'), 'AFTER-ONE', 'the workspace is untouched')
+    assert.equal(readFileSync(second, 'utf8'), 'AFTER-TWO')
+    assert.deepEqual(warned, [], 'a cancellation is not a failure to warn about')
+  } finally {
+    await rm(dshHome, { recursive: true, force: true })
+    await rm(work, { recursive: true, force: true })
+  }
 })

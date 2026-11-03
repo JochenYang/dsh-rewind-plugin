@@ -206,6 +206,28 @@ export function blobsRoot(dshHome: string): string {
  */
 const inFlight = new Set<string>()
 
+/**
+ * Serializes a capture's commit against a collection pass.
+ *
+ * `inFlight` protects bytes while they are being written, and the manifest protects
+ * them once it exists — but a pass that scanned manifests a moment BEFORE a capture
+ * wrote its own holds a `referenced` set from an earlier instant. The capture then
+ * releases its holds, and the pass deletes bytes that manifest names: a snapshot
+ * that reads back as "every file changed", with the before-images gone.
+ *
+ * Both sides run in this process, so one mutex is exact where a time-based grace
+ * period is not (a blob shared with an older turn keeps its OLD mtime, so "recently
+ * written" says nothing about it).
+ */
+let collectionGate: Promise<void> = Promise.resolve()
+
+/** Run one critical section with collection, after every section already queued. */
+function withCollectionGate<T>(fn: () => Promise<T>): Promise<T> {
+  const run = collectionGate.then(fn, fn)
+  collectionGate = run.then(() => undefined, () => undefined)
+  return run
+}
+
 /** The manifest path for one turn. */
 function manifestPath(dshHome: string, sessionId: string, turn: number): string {
   return join(treesRoot(dshHome, sessionId), `${String(turn)}.json`)
@@ -423,8 +445,13 @@ export async function captureWorkspace(
   const entries: Record<string, Entry> = Object.create(null) as Record<string, Entry>
   const uncaptured: Record<string, Uncaptured> = Object.create(null) as Record<string, Uncaptured>
   for (const [rel, found] of walk.uncaptured) uncaptured[rel] = found
+  /** Blobs THIS capture holds against collection. `inFlight` is process-wide, so a
+   *  blanket clear released a concurrent capture's holds and the next collection pass
+   *  then deleted bytes a live turn's snapshot still pointed at. */
+  const held = new Set<string>()
   const deadline = Date.now() + limits.maxWalkMs
   let reason = walk.reason
+  let walked = false
   try {
     for (const [rel, found] of walk.files) {
       if (reason === undefined && (signal?.aborted === true || Date.now() > deadline)) {
@@ -452,12 +479,16 @@ export async function captureWorkspace(
         uncaptured[rel] = { size: found.size, mtimeMs: found.mtimeMs, reason: 'unreadable' }
         continue
       }
-      entries[rel] = [await putBlob(dshHome, bytes), found.size, found.mtimeMs]
+      const hash = await putBlob(dshHome, bytes)
+      held.add(hash)
+      entries[rel] = [hash, found.size, found.mtimeMs]
     }
+    walked = true
   } finally {
-    // Release the collection hold whatever happened; the manifest is written
-    // below, and a capture that failed leaves real orphans for the next pass.
-    inFlight.clear()
+    // On a THROW the walk recorded nothing worth protecting. On success the holds
+    // stay until the manifest that names them is durable — releasing here left the
+    // window a collection pass needs to delete them.
+    if (!walked) for (const hash of held) inFlight.delete(hash)
   }
   const snapshot: TreeSnapshot = {
     v: 1,
@@ -470,7 +501,16 @@ export async function captureWorkspace(
     entries,
     uncaptured,
   }
-  await writeManifest(dshHome, snapshot)
+  // The manifest and the release are ONE critical section with collection: a pass
+  // that scanned manifests a moment before this write would see these blobs as
+  // orphans, and once the holds were gone it would delete them.
+  await withCollectionGate(async () => {
+    try {
+      await writeManifest(dshHome, snapshot)
+    } finally {
+      for (const hash of held) inFlight.delete(hash)
+    }
+  })
   return snapshot
 }
 
@@ -712,6 +752,14 @@ interface ManifestRef {
  * @param limits - the retention bounds.
  */
 export async function collectGarbage(dshHome: string, limits: TreeLimits = DEFAULT_TREE_LIMITS): Promise<void> {
+  // The WHOLE pass is one critical section with a capture's commit. The alternative
+  // — gating only the delete loop — still lets a manifest land between the scan that
+  // produced `referenced` and the `rm` that trusts it.
+  await withCollectionGate(() => collectOnce(dshHome, limits))
+}
+
+/** One collection pass; see {@link collectGarbage} for the serialization contract. */
+async function collectOnce(dshHome: string, limits: TreeLimits): Promise<void> {
   const treesDir = join(dshHome, 'storages', 'dsh-rewind-plugin', 'trees')
   const manifests: ManifestRef[] = []
   let sessions: string[]

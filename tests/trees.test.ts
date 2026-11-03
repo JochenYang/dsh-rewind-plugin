@@ -421,3 +421,45 @@ test('pathKey resolves a path and folds the case a Windows path arrives in', () 
     assert.notEqual(pathKey('/A/TS'), pathKey('/a/ts'), 'case is significant on this platform')
   }
 })
+
+test('a collection pass running beside a capture never deletes the bytes it names', async () => {
+  // MEASURED before the fix: 200 files, a collector looping while two captures ran,
+  // left 172-193 of the 200 blobs deleted — a snapshot that reads back as "every
+  // file changed", with the before-images gone for good.
+  //
+  // The cause is the COMMIT, not the walk. A pass scans manifests, then deletes; a
+  // capture that wrote its manifest between those two steps is absent from the
+  // pass's `referenced` set, and once the capture released its holds the pass
+  // deleted the bytes that manifest names. The holds alone cannot close it, because
+  // they are gone exactly when the manifest starts protecting it.
+  for (let round = 0; round < 3; round += 1) {
+    const { root, home } = scratch()
+    try {
+      for (let i = 0; i < 120; i += 1) {
+        writeFileSync(join(root, `f${String(i)}.ts`), `content-${String(i)}-${String(round)}`)
+      }
+      // A collector that keeps running for the whole capture window, which is the
+      // only way to land a pass in the gap deterministically enough to test.
+      let done = false
+      const collector = (async () => {
+        let passes = 0
+        while (!done && passes < 4000) {
+          await collectGarbage(home, DEFAULT_TREE_LIMITS)
+          passes += 1
+        }
+      })()
+      const first = captureWorkspace(home, 'session-a', 1, root, DEFAULT_TREE_LIMITS)
+      const second = captureWorkspace(home, 'session-b', 1, root, DEFAULT_TREE_LIMITS)
+      const [snapshot] = await Promise.all([first, second])
+      done = true
+      await collector
+
+      const missing = Object.values(snapshot.entries)
+        .map((entry) => entry[0])
+        .filter((hash) => !existsSync(join(blobsRoot(home), hash.slice(0, 2), hash)))
+      assert.deepEqual(missing, [], 'every blob the manifest names is still on disk')
+    } finally {
+      await cleanup(root, home)
+    }
+  }
+})

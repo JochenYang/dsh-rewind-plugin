@@ -24,6 +24,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { Session } from '@deepseek-ai/dsh-session'
 import { apply, type Config } from '../src/index.ts'
 import type { RewindParticipantRegistry } from '../src/participants.ts'
+import { treesRoot } from '../src/trees.ts'
 
 /** A workspace and a `$DSH_HOME`, both removed by the caller. */
 function scratch(): { work: string, home: string } {
@@ -715,4 +716,41 @@ test('a messages-only preview reports NO file effect, so the dialog cannot overs
   assert.deepEqual(messagesOnly.restore, [], 'the messages-only preview listed a file it will not touch')
   assert.deepEqual(messagesOnly.remove, [])
   assert.equal(messagesOnly.skipped, true)
+})
+
+test('a tool gate that arrives during a snapshot waits for it instead of racing it', async () => {
+  // THE DEFECT this pins: the second caller saw the turn's claim, took the early
+  // return, and released its tool while the first walk was still reading — so the
+  // tool wrote into the tree being captured, the turn recorded a mid-turn state as
+  // its starting state, and the recall still answered `coverage: full`.
+  const { work, home } = scratch()
+  try {
+    process.env.DSH_HOME = home
+    const target = session('race', work)
+    openTurn(target, 1, 'touch something')
+    const { host } = mount()
+    // Enough files that the walk is still running when the second gate arrives.
+    for (let i = 0; i < 80; i += 1) writeFileSync(join(work, `f${String(i)}.ts`), `c${String(i)}`)
+    const manifest = join(treesRoot(home, target.id), '1.json')
+
+    // Each gate records whether the snapshot was already on disk when its tool was
+    // released. That is the whole contract: a tool may not run before the state it
+    // is about to change has been captured.
+    const releasedWithSnapshot: boolean[] = []
+    const gate = (): Promise<unknown> =>
+      host.waterfall('tools/pre-execute', { name: 'pwsh', agent: { session: target } }, () => {
+        releasedWithSnapshot.push(existsSync(manifest))
+        return { kind: 'allow' }
+      })
+
+    const first = gate()
+    await Promise.resolve()
+    const second = gate()
+    await Promise.all([first, second])
+
+    assert.deepEqual(releasedWithSnapshot, [true, true], 'both tools wait for the same walk')
+  } finally {
+    await rm(work, { recursive: true, force: true })
+    await rm(home, { recursive: true, force: true })
+  }
 })

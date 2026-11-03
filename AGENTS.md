@@ -29,6 +29,7 @@ allowlists it. Run `npm run build` after changing `src/` and commit the rebuilt 
 |---|---|
 | `src/index.ts` | host half: the `/rewind` command, the write recorder, the snapshot/revert path |
 | `src/cut.ts` | the recall computation — anchors, the replacement range, the placeholder |
+| `src/coverage.ts` | the coverage verdict — how much of a range's file changes a recall can see |
 | `src/projection.ts` | the `rewindAnchors` projection, the client's entire read face |
 | `src/recorder.ts` | which file change belongs to which turn |
 | `src/trees.ts` | the workspace snapshot store — the second before-image source, and its retention |
@@ -169,6 +170,13 @@ or `npm whoami` fails with 401. That token's npm identity has publish rights to 
 - **The waterfall's second argument is private.** The event publishes `actor: object | undefined`, and
   the turn is read from `exec.agent.session`. When it is absent the recorder reports it rather than
   filing the change under no turn, which used to look exactly like a clean recall.
+- **The blob store's two writers needed one mutex.** A collection pass scans manifests and then deletes
+  what they do not name. A capture that commits between those two steps is absent from the pass's
+  `referenced` set, so its blobs look like orphans and are deleted — a snapshot that reads back as
+  "every file changed", with the before-images unrecoverable. Measured: 172–193 of 200 blobs gone with a
+  collector looping beside two captures. `inFlight` cannot close it (it is released exactly when the
+  manifest starts protecting the bytes), and a time-based grace period cannot either (a blob shared with
+  an older turn keeps its old mtime). Both sides now run inside `withCollectionGate`.
 - **No `@deepseek-ai/dsh-*` peerDependencies.** The installer compares those against the running
   runtime version and refuses the install on a mismatch, which would pin the plugin to one DSH
   release. `tests/port.test.ts` fails if one is added back.

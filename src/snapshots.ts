@@ -40,6 +40,7 @@
  */
 
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { randomBytes } from 'node:crypto'
 import { dirname, join } from 'node:path'
 
 /** One file's state before a change, keyed to the turn that changed it. */
@@ -158,10 +159,10 @@ function stamp(now: number): string {
  * One quarantined slot's manifest.
  *
  * Written beside the displaced bytes because the slot's NAME cannot carry the
- * facts a manager needs: it holds a timestamp and a hash, which is enough to keep
- * two same-second slots apart and nothing else. Without this file a user looking
- * at the quarantine sees `replaced` and cannot tell which project, let alone which
- * file, it came from.
+ * facts a manager needs: it holds a timestamp, a hash and a random tail, which
+ * keep slots distinct and ordered but say nothing about their origin. Without this
+ * file a user looking at the quarantine sees `replaced` and cannot tell which
+ * project, let alone which file, it came from.
  */
 export interface QuarantineManifest {
   /** Absolute path the content was displaced from. */
@@ -209,7 +210,14 @@ export async function restoreOne(
   now: number,
   maxBytes: number = MAX_SNAPSHOT_BYTES,
 ): Promise<{ readonly kind: 'restored' | 'removed' | 'failed', readonly reason?: string, readonly slot?: string }> {
-  const slot = join(quarantineDir, `${stamp(now)}-${Math.abs(hash(snapshot.path))}`)
+  // The random tail is not decoration: the stamp is only millisecond-accurate and the
+  // hash is a 32-bit fold (`Math.abs` even maps `h` and `-h` onto the same slot), so
+  // two paths restored in one millisecond could share a slot and the second
+  // `writeFile` would overwrite the first quarantine copy without a trace.
+  const slot = join(
+    quarantineDir,
+    `${stamp(now)}-${Math.abs(hash(snapshot.path))}-${randomBytes(4).toString('hex')}`,
+  )
   try {
     const current = await captureBefore(snapshot.path, maxBytes)
     if (current.kind === 'unreadable') return { kind: 'failed', reason: current.reason }
@@ -249,7 +257,62 @@ export async function restoreOne(
   }
 }
 
-/** A small stable hash, only used to keep two same-second slots apart. */
+/** One file a recall could not put back, and why. */
+export interface UnrestorableFile {
+  /** Absolute path. */
+  readonly path: string
+  /** Short code or sentence the report carries. */
+  readonly reason: string
+}
+
+/**
+ * Restore a whole range's targets, stopping when the caller aborts.
+ *
+ * The abort check is per file rather than at the entry: a recall whose participant
+ * deadline fired mid-range must stop writing where it stands. Continuing would race
+ * the user's own retry on the same paths, because the recall forgets the recorder's
+ * before-images and drops the snapshots right after it reports.
+ *
+ * The targets it never reached are named `cancelled` rather than dropped from the
+ * report: a file the user expected back must not vanish from the list because the
+ * clock ran out.
+ *
+ * @param targets - the files to put back, in report order.
+ * @param quarantineDir - where displaced content is kept.
+ * @param now - clock for the quarantine slot names.
+ * @param maxBytes - size cap for quarantining the current bytes.
+ * @param log - receives one line per file that could not be restored.
+ * @param signal - aborts the loop between files.
+ * @returns the counts, plus every file that was not restored and why.
+ */
+export async function restoreTargets(
+  targets: readonly Snapshot[],
+  quarantineDir: string,
+  now: number,
+  maxBytes: number,
+  log: { warn(message: string): void },
+  signal?: AbortSignal,
+): Promise<{ readonly restored: number, readonly removed: number, readonly unrestorable: UnrestorableFile[] }> {
+  const unrestorable: UnrestorableFile[] = []
+  let restored = 0
+  let removed = 0
+  for (const target of targets) {
+    if (signal?.aborted === true) {
+      unrestorable.push({ path: target.path, reason: 'cancelled' })
+      continue
+    }
+    const outcome = await restoreOne(target, quarantineDir, now, maxBytes)
+    if (outcome.kind === 'restored') restored += 1
+    else if (outcome.kind === 'removed') removed += 1
+    else {
+      unrestorable.push({ path: target.path, reason: outcome.reason ?? 'unknown' })
+      log.warn(`rewind: could not restore ${target.path}: ${outcome.reason ?? 'unknown'}`)
+    }
+  }
+  return { restored, removed, unrestorable }
+}
+
+/** A small stable hash, kept so a slot's name still says which path it came from. */
 function hash(value: string): number {
   let out = 0
   for (let i = 0; i < value.length; i += 1) {
