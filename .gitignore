@@ -5,3 +5,6 @@ node_modules/
 .test-dist/
 .scratch/
 *.tgz
+# Local handoff docs (`.devflow/<slug>.md`): a working record for the next agent,
+# not part of the package or its history. Move one to docs/ if it should persist.
+.devflow/
