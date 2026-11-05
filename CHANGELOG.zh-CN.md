@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-11-05
+
 ### Fixed
 
 - 投影注册现在两条内核线都能用。`sessionProjections.register` 在 `0.2.1` 及以前返回 disposer，从
@@ -149,7 +151,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.3.0...v0.4.0
