@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-11-05
+
 ### Fixed
 
 - 内核 `0.2.2-rc.1` 上撤回图标恢复显示。内置的 `user` 渲染器会在自身内部调用子槽渲染器
@@ -164,7 +166,8 @@
 - 移植本身：把 `@dsh-app` 套件里的 rewind 插件改造成面向标准 DeepSeek Harness 的独立包。
   从未发布；`0.1.1` 是首个发布版本。
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1

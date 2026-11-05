@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-11-05
+
 ### Fixed
 
 - The recall icon came back on kernel `0.2.2-rc.1`. Its built-in `user` renderer calls the child-slot
@@ -195,7 +197,8 @@ First published release.
 - The port itself: the `@dsh-app` suite's rewind plugin adapted into a standalone package for stock
   DeepSeek Harness. Never published; `0.1.1` is the first release.
 
-[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.0...v0.4.1
