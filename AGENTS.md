@@ -31,6 +31,7 @@ allowlists it. Run `npm run build` after changing `src/` and commit the rebuilt 
 | `src/cut.ts` | the recall computation — anchors, the replacement range, the placeholder |
 | `src/coverage.ts` | the coverage verdict — how much of a range's file changes a recall can see |
 | `src/projection.ts` | the `rewindAnchors` projection, the client's entire read face |
+| `src/registration.ts` | registering and releasing that projection across kernel lines |
 | `src/recorder.ts` | which file change belongs to which turn |
 | `src/trees.ts` | the workspace snapshot store — the second before-image source, and its retention |
 | `src/snapshots.ts` | before-images (bytes now), and the quarantine directory layout |
@@ -192,6 +193,15 @@ or `npm whoami` fails with 401. That token's npm identity has publish rights to 
   the newest checkpoint is where recallable history ends. The kernel also exports
   `compactSurfaceRegion` for a MIDDLE span; a producer that used it would leave older prompts
   recallable and make `stoppedAtCompaction` a lie. Re-check `compactionBoundary` if one appears.
+- **`sessionProjections.register` changed shape under us, and this package must span both lines.** Up to
+  `0.2.1` it returns the disposer and `SessionProjectionStateMap` carries the fold's state type; from
+  `0.2.2-rc.1` it returns `Promise<ProjectionHandle>` and that map is gone, the state type being
+  `ProjectionDefinition`'s second generic. Because the plugin declares no `@deepseek-ai/dsh-*` peer, one
+  build has to serve both: `src/projection.ts` augments BOTH maps (the unused one is inert) and passes
+  `RewindState` explicitly, and `src/registration.ts` reads the registration answer's shape at run time.
+  The local `tsc` only proves the older line — a green typecheck says nothing about the newer one. Prove
+  it by installing `@deepseek-ai/dsh-session-projection@0.2.2-rc.1` into a scratch copy and running
+  `tsc` there; with one `zod` shared, as a real profile has.
 
 ## Tests
 

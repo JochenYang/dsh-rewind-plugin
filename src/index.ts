@@ -114,6 +114,7 @@ import type {} from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-session-projection'
 import { availability, compactionBoundary, placeholderData, planCut, type EventLike, type SessionLike } from './cut.ts'
 import { coverageOf, READ_ONLY_TOOLS } from './coverage.ts'
+import { registerProjection } from './registration.ts'
 import { createRecorder, turnAt, type CaptureFailure, type RecordedChange, type Recorder } from './recorder.ts'
 import {
   captureBefore,
@@ -497,7 +498,10 @@ export function apply(ctx: Context, config: Config): void {
   // deliberately not here — it rides the command result instead, because a
   // projection is durable and a reload would replay the composer prefill.
   ctx.effect(
-    () => ctx.sessionProjections.register(rewindProjection),
+    // The wrapper, not the bare call: the two kernel lines disagree on what
+    // `register` answers, and the declaration this tree compiles against describes
+    // only the older one. See `./registration.ts`.
+    () => registerProjection(() => ctx.sessionProjections.register(rewindProjection), log),
     'plugin-rewind: rewindAnchors projection',
   )
 

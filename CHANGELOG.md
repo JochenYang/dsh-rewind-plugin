@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Fixed
+
+- The projection registration now works on both kernel lines. `sessionProjections.register` returns the
+  disposer up to `0.2.1` and a `Promise<ProjectionHandle>` from `0.2.2-rc.1`; the plugin reads the
+  answer's shape at run time, releases through whichever it got, and warns instead of leaving a rejected
+  registration as an unhandled rejection. `projection.ts` passes the fold's state type explicitly, which
+  both lines accept.
+
 ## [0.4.2] - 2026-11-03
 
 ### Fixed

@@ -9,6 +9,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- 投影注册现在两条内核线都能用。`sessionProjections.register` 在 `0.2.1` 及以前返回 disposer，从
+  `0.2.2-rc.1` 起返回 `Promise<ProjectionHandle>`；插件在运行时判断拿到的是哪种形态，按对应方式释放，
+  并且注册失败时给出警告，而不是留下一个未处理的 rejection。`projection.ts` 改为显式传入折叠状态类型，
+  两种形态都接受。
+
 ## [0.4.2] - 2026-11-03
 
 ### Fixed
