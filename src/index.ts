@@ -131,6 +131,7 @@ import {
   latestSnapshotBefore,
   pathKey,
   pruneSnapshots,
+  requestGarbageCollection,
   readSnapshot,
   type TreeLimits,
   type TreeSnapshot,
@@ -589,6 +590,9 @@ export function apply(ctx: Context, config: Config): void {
         const previous = await latestSnapshotBefore(dshHome, info.id, info.turn)
         const capture = await captureWorkspace(dshHome, info.id, info.turn, info.cwd, limits, previous, signal)
         await pruneSnapshots(dshHome, info.id, limits)
+        requestGarbageCollection(dshHome, (error: unknown) => {
+          log.warn(`rewind: snapshot collection failed: ${messageOf(error)}`)
+        }, limits)
         // A CANCELLED walk is not a snapshot: `captureWorkspace` answers
         // `complete:false, reason:'cancelled'` instead of throwing. Keeping the claim
         // would make every later tool gate in this turn await a promise that recorded
@@ -793,7 +797,14 @@ export function apply(ctx: Context, config: Config): void {
     if (!conversationOnly) {
       recorder.forget(sessionId, plan.turns)
       try {
-        await dropSnapshots(resolveDshHome(), sessionId, plan.turns)
+        const dshHome = resolveDshHome()
+        await dropSnapshots(dshHome, sessionId, plan.turns)
+        // Scheduled, not awaited: the confirmation dialog is waiting on this
+        // command's answer, and a full-store collection behind it is what made the
+        // dialog look frozen.
+        requestGarbageCollection(dshHome, (error: unknown) => {
+          log.warn(`rewind: snapshot collection failed: ${messageOf(error)}`)
+        }, limits)
       } catch (error) {
         log.warn(`rewind: snapshot cleanup failed: ${messageOf(error)}`)
       }

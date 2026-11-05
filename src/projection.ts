@@ -307,6 +307,9 @@ function isOwnReplacement(event: { readonly data?: unknown }): boolean {
   return data?.source?.kind === REWIND_SOURCE_KIND
 }
 
+/** Wire payloads already built, keyed by the state they came from. */
+const viewCache = new WeakMap<RewindState, RewindWire>()
+
 /**
  * Project state to the wire value: recall points newest first, plus what has
  * already been hidden.
@@ -318,8 +321,21 @@ function isOwnReplacement(event: { readonly data?: unknown }): boolean {
  * send) then shifted every ordinal past it by one, so the picker's row for one
  * message recalled a different one. `tests/anchors.test.ts` now checks the two
  * functions against one surface.
+ *
+ * MEMOIZED BY STATE IDENTITY. The newer projection contract asks an unchanged
+ * state to produce the SAME reference so downstream work is zero, and
+ * `applyRewindEvent` already returns the same reference for an event it does not
+ * handle — so the state is a reliable cache key. Without this, a replay rebuilt
+ * the anchor list for every frame: on a real 36,238-event session (68.5 MB
+ * uncompressed) the client sat at "loading history" with the CPU pinned. With it,
+ * the cost is one enumeration per CHANGED state instead of per event.
+ *
+ * @param state - the folded projection state.
+ * @returns the wire value, the same object for the same state.
  */
 export function rewindView(state: RewindState): RewindWire {
+  const cached = viewCache.get(state)
+  if (cached !== undefined) return cached
   const anchors: RewindAnchor[] = []
   // "First prompt of its turn is the recall point", applied in LOG order — a
   // steering message shares the prompt shape but is a mid-turn interjection, and
@@ -348,7 +364,7 @@ export function rewindView(state: RewindState): RewindWire {
       preview: previewText(node.text),
     })
   }
-  return {
+  const wire: RewindWire = {
     anchors,
     hiddenTurns: state.hiddenTurns,
     // Derived from the CURRENT node list, exactly like the host's
@@ -356,6 +372,8 @@ export function rewindView(state: RewindState): RewindWire {
     // other asks "which is the newest", and both must answer together.
     stoppedAtCompaction: state.nodes.some((node) => node.checkpoint),
   }
+  viewCache.set(state, wire)
+  return wire
 }
 
 /**

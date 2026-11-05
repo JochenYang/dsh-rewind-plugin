@@ -282,3 +282,23 @@ test('the chosen scope reaches the host as a verb, not as a flag', () => {
   assert.match(entry, /mode === 'conversationOnly' \? `\/rewind conversation \$\{String\(n\)\}`/u,
     'the client no longer sends the messages-only verb')
 })
+
+test('both node registrations supply the child-slot renderer the built-in calls', () => {
+  // MEASURED on 0.2.2-rc.1: the built-in `UserMessageNodeView` calls
+  // `renderSlotChain` for `conversation.chat.user.before` from its own body. Our
+  // wrapper replaces that renderer, and a wrapper gets no child-slot renderers
+  // unless it supplies them — so the call threw, the slot system retired the
+  // registration, the kernel's renderer took over, and the bubble came back with
+  // its clock and copy button but WITHOUT the recall icon.
+  //
+  // `inject` PROVIDES the renderer. Declaring the seat through `children` instead
+  // throws at renderer start-up — the kernel already declared that child on the
+  // `user` entry — and the whole client stops at "loading history".
+  const supplied = entry.match(/inject:\s*\(\)\s*=>\s*\(\{\s*renderSlotChain:\s*\(\)\s*=>\s*null\s*\}\)/g) ?? []
+  assert.equal(supplied.length, 2, 'user and steering both render that built-in, so both need it')
+  assert.equal(
+    /children:\s*\{\s*['"]conversation\.chat\.user\.before['"]/.test(entry),
+    false,
+    'a second declaration of the same child throws; the seat is provided, not declared',
+  )
+})

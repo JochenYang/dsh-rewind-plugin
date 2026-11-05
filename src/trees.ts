@@ -691,7 +691,12 @@ export async function dropSnapshots(dshHome: string, sessionId: string, turns: r
       /* nothing to drop */
     }
   }
-  await collectGarbage(dshHome)
+  // No collection here: it is O(the whole store) — every manifest parsed, every
+  // blob stat'ed — and this runs on the recall's answer path, with the confirmation
+  // dialog waiting on the other side of that answer. Measured upstream on a real
+  // store (578 manifests, 23,970 blobs): 0 ms to drop, 2,694 ms to collect, and the
+  // dialog spun the whole time. The caller schedules it instead; see
+  // {@link requestGarbageCollection}.
 }
 
 /**
@@ -716,7 +721,9 @@ export async function pruneSnapshots(
   for (const turn of excess) {
     await rm(manifestPath(dshHome, sessionId, turn), { force: true })
   }
-  await collectGarbage(dshHome)
+  // Same reason as `dropSnapshots`, and it bites harder: this one runs at every
+  // turn start, so an awaited collection held the tool gate behind a full-store
+  // scan. The caller schedules it.
 }
 
 /** The turns this session has a manifest for, ascending. */
@@ -756,6 +763,69 @@ export async function collectGarbage(dshHome: string, limits: TreeLimits = DEFAU
   // — gating only the delete loop — still lets a manifest land between the scan that
   // produced `referenced` and the `rm` that trusts it.
   await withCollectionGate(() => collectOnce(dshHome, limits))
+}
+
+/** Collections still running, one per `$DSH_HOME`. */
+const pendingCollections = new Map<string, Promise<void>>()
+
+/** A request that arrived while a pass was running, so one more pass is owed. */
+const missedWhileCollecting = new Set<string>()
+
+/**
+ * Schedule one collection pass and return immediately.
+ *
+ * `collectGarbage` is O(the whole store): it parses every session's manifests and
+ * stats every blob. Awaiting it on the recall's answer path is what made the
+ * confirmation dialog look frozen, and awaiting it at every turn start held the
+ * tool gate behind the same scan.
+ *
+ * COALESCING IS REQUIRED, not a nicety: the turn-start caller fires once per turn,
+ * so without it the passes queue and re-scan one store back to back. A request that
+ * arrives mid-pass records one follow-up, so a manifest dropped during a pass still
+ * gets collected.
+ *
+ * The pass itself goes through {@link collectGarbage}, which is gated against a
+ * capture's commit — scheduling moves the work off the caller's path, never around
+ * that gate.
+ *
+ * @param dshHome - resolved `$DSH_HOME`.
+ * @param report - receives a failure; the returned promise is deliberately not
+ *   awaited, so a bare rejection would be an unhandled one.
+ * @param limits - the retention bounds.
+ */
+export function requestGarbageCollection(
+  dshHome: string,
+  report: (error: unknown) => void,
+  limits: TreeLimits = DEFAULT_TREE_LIMITS,
+): void {
+  if (pendingCollections.has(dshHome)) {
+    missedWhileCollecting.add(dshHome)
+    return
+  }
+  const run = (async (): Promise<void> => {
+    try {
+      await collectGarbage(dshHome, limits)
+      while (missedWhileCollecting.delete(dshHome)) await collectGarbage(dshHome, limits)
+    } finally {
+      pendingCollections.delete(dshHome)
+    }
+  })()
+  pendingCollections.set(dshHome, run)
+  // Attached synchronously: nothing awaits `run`, so a rejection nobody handled
+  // would surface as an unhandled rejection.
+  run.catch(report)
+}
+
+/**
+ * Wait for the scheduled pass, if any.
+ *
+ * For tests and for a caller that must observe the store settled; production paths
+ * never wait on collection.
+ *
+ * @param dshHome - resolved `$DSH_HOME`.
+ */
+export async function drainGarbageCollection(dshHome: string): Promise<void> {
+  await pendingCollections.get(dshHome)
 }
 
 /** One collection pass; see {@link collectGarbage} for the serialization contract. */

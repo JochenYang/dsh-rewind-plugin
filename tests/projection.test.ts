@@ -237,3 +237,23 @@ test('folded state satisfies its own schema', () => {
   const parsed = rewindStateSchema.safeParse(state)
   assert.equal(parsed.success, true, JSON.stringify(parsed.error?.issues))
 })
+
+test('the wire value is memoized by state identity, and a new state gets a new one', () => {
+  // The newer projection contract asks an unchanged state to produce the SAME
+  // reference, so downstream work is zero; `applyRewindEvent` already returns the
+  // same state for an event it does not handle, which is what makes the state a
+  // reliable cache key. Without the memo, a replay rebuilt the anchor list for every
+  // frame — on a real 36,238-event session the client sat at "loading history" with
+  // the CPU pinned.
+  const state = fold([turnStart(0, 1), user(1, 'a'), assistant(2, 'b')])
+  const first = rewindView(state)
+  const second = rewindView(state)
+  assert.equal(second, first, 'the same state must yield the same wire object')
+
+  // A state the fold changed is a different object, so it must be rebuilt rather
+  // than serving the previous payload.
+  const later = fold([turnStart(0, 1), user(1, 'a'), assistant(2, 'b'), turnStart(3, 2), user(4, 'c')])
+  const third = rewindView(later)
+  assert.notEqual(third, first, 'a changed state must not reuse the old payload')
+  assert.equal(third.anchors.length, 2, 'and it carries the new anchor set')
+})

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Fixed
+
+- The recall icon came back on kernel `0.2.2-rc.1`. Its built-in `user` renderer calls the child-slot
+  renderer `conversation.chat.user.before` from its own body, and the wrapper that adds the icon
+  supplied none — the call threw, the slot system retired the registration, and the kernel's renderer
+  took over, leaving the bubble, clock and copy button without the icon. Both `user` and `steering` now
+  provide an empty `renderSlotChain`.
+- The projection's wire value is memoized by state identity, so an unchanged state returns the same
+  object the newer contract asks for. Without it a replay rebuilt the anchor list for every frame: on a
+  real 36,238-event session the client stayed at "loading history" with the CPU pinned.
+- Dropping or pruning snapshots no longer waits for a collection pass. That pass parses every manifest
+  and stats every blob — measured at 2,694 ms on a store with 578 manifests and 23,970 blobs — and it
+  sat on the recall's answer path, so the confirmation dialog spun after the user confirmed; pruning
+  runs at every turn start, where it held the tool gate behind the same scan. Collection is now
+  scheduled, coalesced per `$DSH_HOME`, and still runs through the collection gate.
+
 ## [0.4.3] - 2026-11-05
 
 ### Fixed

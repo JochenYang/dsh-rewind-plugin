@@ -41,6 +41,8 @@ import {
   DEFAULT_TREE_LIMITS,
   diffWorkspace,
   dropSnapshots,
+  drainGarbageCollection,
+  requestGarbageCollection,
   latestSnapshotBefore,
   pathKey,
   pruneSnapshots,
@@ -302,6 +304,11 @@ test('dropping a turn collects the blobs nothing references any more', async () 
 
   await dropSnapshots(home, 's', [2])
   assert.equal(await readSnapshot(home, 's', 2), undefined, 'the manifest is gone')
+  // Dropping is manifest-only now: the scan that finds orphans is O(the whole
+  // store) and used to sit on the recall's answer path.
+  assert.equal(blobCount(home), 3, 'dropping alone deletes no blob')
+  requestGarbageCollection(home, (error) => { throw error })
+  await drainGarbageCollection(home)
   // 'A2' is referenced by nothing; 'A' and 'B' are still live for turn 1.
   assert.equal(blobCount(home), 2, 'the orphaned blob is collected, the shared ones survive')
   assert.ok(existsSync(treesRoot(home, 's')), 'the session directory stays')
@@ -347,6 +354,9 @@ test('the retention cap keeps the newest manifests and collects what it drops', 
   assert.equal(await readSnapshot(home, 's', 2), undefined)
   assert.ok(await readSnapshot(home, 's', 3) !== undefined, 'the newest are kept')
   assert.ok(await readSnapshot(home, 's', 4) !== undefined)
+  assert.equal(blobCount(home), 4, 'pruning alone deletes no blob')
+  requestGarbageCollection(home, (error) => { throw error })
+  await drainGarbageCollection(home)
   assert.equal(blobCount(home), 2, 'the blobs only the dropped turns referenced are collected')
   await cleanup(root, home)
 })
