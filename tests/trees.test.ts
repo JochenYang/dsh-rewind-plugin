@@ -345,7 +345,11 @@ test('the retention cap keeps the newest manifests and collects what it drops', 
   const { root, home } = scratch()
   writeFileSync(join(root, 'a.txt'), 'v0')
   for (let turn = 1; turn <= 4; turn += 1) {
-    writeFileSync(join(root, 'a.txt'), `v${String(turn)}`)
+    // The size grows with the turn on purpose. A capture reuses an entry whose
+    // (size, mtimeMs) still matches, and two writes inside one millisecond would
+    // then look unchanged — the reuse path, not the retention path, would decide
+    // the blob count.
+    writeFileSync(join(root, 'a.txt'), `v${String(turn)}`.repeat(turn))
     await captureWorkspace(home, 's', turn, root, limits(), await latestSnapshotBefore(home, 's', turn))
   }
   assert.equal(blobCount(home), 4)
