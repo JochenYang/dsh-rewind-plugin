@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-11-26
+
 ### Fixed
 
 - `/rewind plan <n>` 不再把每个受影响文件的全文写进会话日志。预览限制为 500 行、每侧 64 KB、总文本 4 MiB：
@@ -188,6 +190,7 @@
   从未发布；`0.1.1` 是首个发布版本。
 
 [Unreleased]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.4...HEAD
+[0.4.5]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JochenYang/dsh-rewind-plugin/compare/v0.4.1...v0.4.2
