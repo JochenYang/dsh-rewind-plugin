@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 
 ## [Unreleased]
 
+### Fixed
+
+- `/rewind plan <n>` no longer puts every affected file's whole text into the session log. The preview is
+  capped at 500 rows, 64 KB per side and 4 MiB of text: a cut side is marked truncated, a side that yields no
+  text is marked as not previewed, a row past the text budget keeps its place without a diff, and files past
+  the row cap are counted as `omitted`. A capped side keeps the window around the first difference, so a
+  truncated diff never shows two identical prefixes as "no change"; a side that fits whole is shown whole (a
+  pure append or deletion no longer cuts the shorter side down to its tail), and a file the range deleted
+  previews as empty → old bytes instead of "not previewed". Measured upstream before the caps: 2,000 files of
+  42 KB made a 179.9 MB payload, +170 MB on the host heap and a 265 ms parse on every transcript render — a
+  parse the command row now memoizes as well.
+- A turn's workspace snapshot is never re-taken once one of its tools has run. An incomplete first walk used
+  to release its claim so a later gate could retry, and every later tool call then re-walked the tree and
+  recorded a mid-turn state under the turn's own number — the state a recall would "restore" to. On a
+  repository whose snapshot is never complete (measured upstream: 61,788 files / 4.2 GB in scope, 499 of
+  1,013 manifests partial) it also cost a walk plus a copy at every tool call. A gate in a turn that already
+  ran a tool now only joins a capture that is claimed; the turn is marked before the tool runs, so a second
+  gate dispatched in parallel cannot re-walk either, and the turn's first tool still retries an incomplete or
+  failed walk.
+- The snapshot's copy phase honours `maxWalkMs` and the abort signal on a budget of its own. The bound used to
+  cover only the directory scan, so a 2,000-file copy ran to completion in 842 ms against a 50 ms budget. A
+  stopped copy still carries unchanged files forward from the previous manifest, and a changed file it could
+  not read is left out of both maps instead of being recorded under a reason that does not apply.
+- The store is collected after a recall, or at most once an hour from the capture path — no longer after every
+  snapshot and every prune. A session at its retention cap drops one manifest per capture, so the prune's drop
+  put a whole-store scan (measured upstream: 1.9 s of manifest parsing plus 3.2 s of `stat`) behind every turn
+  again. The capture path's request is floored by `minCollectionIntervalMs` (one hour by default), a failed
+  pass neither starts that clock nor leaves a second scan of the same store queued, and a recall still
+  collects at once.
+
 ## [0.4.4] - 2026-11-05
 
 ### Fixed
